@@ -5,14 +5,13 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
 @Service
 public class CsvService {
-    public List<Map<String, String>> convertCsvToJson(InputStream archive) throws IOException {
+    public List<Map<String, String>> convertCsvToJson(InputStream archive) {
         try {
             CsvMapper csvMapper = new CsvMapper();
 
