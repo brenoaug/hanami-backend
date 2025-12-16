@@ -5,33 +5,43 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.recode.hanami.dto.DadosArquivoDTO;
+import com.recode.hanami.exceptions.ArquivoInvalidoException;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class CsvService {
-    public List<DadosArquivoDTO> conversorCsvParaJson(InputStream arquivo) {
-        try {
+    public List<DadosArquivoDTO> conversorCsvParaJson(MultipartFile file) {
+        try (InputStream inputStream = file.getInputStream()) {
             CsvMapper csvMapper = new CsvMapper();
 
             csvMapper.registerModule(new JavaTimeModule());
 
-            CsvSchema csvSchema = CsvSchema.emptySchema().withHeader();
+            CsvSchema schema = csvMapper.schemaFor(DadosArquivoDTO.class)
+                    .withHeader()
+                    .withColumnReordering(true)
+                    .withStrictHeaders(true);
 
-            MappingIterator<DadosArquivoDTO> it = csvMapper
+            try (MappingIterator<DadosArquivoDTO> it = csvMapper
                     .readerFor(DadosArquivoDTO.class)
-                    .with(csvSchema)
-                    .readValues(arquivo);
+                    .with(schema)
+                    .readValues(inputStream)) {
 
-            return it.readAll();
+                return it.readAll();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Erro de leitura do arquivo: " + e.getMessage());
+        } catch (RuntimeException e) {
 
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Erro ao processar o arquivo CSV: " + e.getMessage());
+            if (e.getMessage() != null && (e.getMessage().contains("Missing header") || e.getMessage().contains("Too many entries"))) {
+
+                throw new ArquivoInvalidoException("Layout do arquivo inválido. Verifique se todas as colunas obrigatórias estão presentes. Detalhe técnico: " + e.getMessage());
+            }
+            throw e;
         }
-
     }
 }

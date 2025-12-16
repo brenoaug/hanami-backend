@@ -1,7 +1,6 @@
 package com.recode.hanami.util;
 
 import java.time.LocalDate;
-import java.util.Date;
 
 public class TratamentoDadosUtil {
     private TratamentoDadosUtil(){}
@@ -21,8 +20,8 @@ public class TratamentoDadosUtil {
         return (valor == null) ? 0.0 : valor;
     }
 
-    public static Character tratarCharacter(Character valor) {
-        return (valor == null) ? 'N' : valor;
+    public static String tratarGenero(String valor) {
+        return (valor == null) ? "não especificado" : valor;
     }
 
     public static LocalDate tratarData(LocalDate valor) {

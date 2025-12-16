@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.recode.hanami.util.TratamentoDadosUtil;
 
 import java.time.LocalDate;
-import java.util.Date;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DadosArquivoDTO {
@@ -26,6 +25,7 @@ public class DadosArquivoDTO {
     private String canalVenda;
     @JsonProperty("forma_pagamento")
     private String formaPagamento;
+
     //Cliente
     @JsonProperty("cliente_id")
     private String clienteId;
@@ -34,13 +34,14 @@ public class DadosArquivoDTO {
     @JsonProperty("idade_cliente")
     private Integer idadeCliente;
     @JsonProperty("genero_cliente")
-    private Character generoCliente;
+    private String generoCliente;
     @JsonProperty("cidade_cliente")
     private String cidadeCliente;
     @JsonProperty("estado_cliente")
     private String estadoCliente;
     @JsonProperty("renda_estimada")
     private Double rendaEstimada;
+
     //Produto
     @JsonProperty("produto_id")
     private String produtoId;
@@ -67,108 +68,13 @@ public class DadosArquivoDTO {
     @JsonProperty("vendedor_id")
     private String vendedorId;
 
-    public String getIdTransacao() {
-        return idTransacao;
+    public DadosArquivoDTO() {
     }
 
-    public LocalDate getDataVenda() {
-        return dataVenda;
-    }
 
-    public Double getValorFinal() {
-        return valorFinal;
-    }
-
-    public Double getSubtotal() {
-        return subtotal;
-    }
-
-    public Double getDescontoPercent() {
-        return descontoPercent;
-    }
-
-    public String getCanalVenda() {
-        return canalVenda;
-    }
-
-    public String getFormaPagamento() {
-        return formaPagamento;
-    }
-
-    public String getClienteId() {
-        return clienteId;
-    }
-
-    public String getNomeCliente() {
-        return nomeCliente;
-    }
-
-    public Integer getIdadeCliente() {
-        return idadeCliente;
-    }
-
-    public Character getGeneroCliente() {
-        return generoCliente;
-    }
-
-    public String getCidadeCliente() {
-        return cidadeCliente;
-    }
-
-    public String getEstadoCliente() {
-        return estadoCliente;
-    }
-
-    public Double getRendaEstimada() {
-        return rendaEstimada;
-    }
-
-    public String getProdutoId() {
-        return produtoId;
-    }
-
-    public String getNomeProduto() {
-        return nomeProduto;
-    }
-
-    public String getCategoria() {
-        return categoria;
-    }
-
-    public String getMarca() {
-        return marca;
-    }
-
-    public Double getPrecoUnitario() {
-        return precoUnitario;
-    }
-
-    public Integer getQuantidade() {
-        return quantidade;
-    }
-
-    public Double getMargemLucro() {
-        return margemLucro;
-    }
-
-    public String getRegiao() {
-        return regiao;
-    }
-
-    public String getStatusEntrega() {
-        return statusEntrega;
-    }
-
-    public Integer getTempoEntregaDias() {
-        return tempoEntregaDias;
-    }
-
-    public String getVendedorId() {
-        return vendedorId;
-    }
-
+    //Setters Vendas
     public void setIdTransacao(String idTransacao) {
-        this.idTransacao = idTransacao;
+        this.idTransacao = TratamentoDadosUtil.tratarString(idTransacao);
     }
 
     public void setDataVenda(LocalDate dataVenda) {
@@ -176,94 +82,99 @@ public class DadosArquivoDTO {
     }
 
     public void setValorFinal(Double valorFinal) {
-        this.valorFinal = valorFinal;
+        this.valorFinal = TratamentoDadosUtil.tratarDouble(valorFinal);
     }
 
     public void setSubtotal(Double subtotal) {
-        this.subtotal = subtotal;
+        this.subtotal = TratamentoDadosUtil.tratarDouble(subtotal);
     }
 
     public void setDescontoPercent(Double descontoPercent) {
-        this.descontoPercent = descontoPercent;
+        this.descontoPercent = TratamentoDadosUtil.tratarDouble(descontoPercent);
     }
 
     public void setCanalVenda(String canalVenda) {
-        this.canalVenda = canalVenda;
+        this.canalVenda = TratamentoDadosUtil.tratarString(canalVenda);
     }
 
     public void setFormaPagamento(String formaPagamento) {
-        this.formaPagamento = formaPagamento;
+        this.formaPagamento = TratamentoDadosUtil.tratarString(formaPagamento);
     }
 
+    //Setters Cliente
     public void setClienteId(String clienteId) {
-        this.clienteId = clienteId;
+        this.clienteId = TratamentoDadosUtil.tratarString(clienteId);
     }
 
     public void setNomeCliente(String nomeCliente) {
-        this.nomeCliente = nomeCliente;
+        this.nomeCliente = TratamentoDadosUtil.tratarString(nomeCliente);
     }
 
     public void setIdadeCliente(Integer idadeCliente) {
-        this.idadeCliente = idadeCliente;
+        this.idadeCliente = TratamentoDadosUtil.tratarInteger(idadeCliente);
     }
 
-    public void setGeneroCliente(Character generoCliente) {
-        this.generoCliente = generoCliente;
+    public void setGeneroCliente(String generoCliente) {
+        this.generoCliente = TratamentoDadosUtil.tratarGenero(generoCliente);
     }
 
     public void setCidadeCliente(String cidadeCliente) {
-        this.cidadeCliente = cidadeCliente;
+        this.cidadeCliente = TratamentoDadosUtil.tratarString(cidadeCliente);
     }
 
     public void setEstadoCliente(String estadoCliente) {
-        this.estadoCliente = estadoCliente;
+        this.estadoCliente = TratamentoDadosUtil.tratarString(estadoCliente);
     }
 
     public void setRendaEstimada(Double rendaEstimada) {
-        this.rendaEstimada = rendaEstimada;
+        this.rendaEstimada = TratamentoDadosUtil.tratarDouble(rendaEstimada);
     }
 
+    //Setters Produto
     public void setProdutoId(String produtoId) {
-        this.produtoId = produtoId;
+        this.produtoId = TratamentoDadosUtil.tratarString(produtoId);
     }
 
     public void setNomeProduto(String nomeProduto) {
-        this.nomeProduto = nomeProduto;
+        this.nomeProduto = TratamentoDadosUtil.tratarString(nomeProduto);
     }
 
     public void setCategoria(String categoria) {
-        this.categoria = categoria;
+        this.categoria = TratamentoDadosUtil.tratarString(categoria);
     }
 
     public void setMarca(String marca) {
-        this.marca = marca;
+        this.marca = TratamentoDadosUtil.tratarString(marca);
     }
 
     public void setPrecoUnitario(Double precoUnitario) {
-        this.precoUnitario = precoUnitario;
+        this.precoUnitario = TratamentoDadosUtil.tratarDouble(precoUnitario);
     }
 
     public void setQuantidade(Integer quantidade) {
-        this.quantidade = quantidade;
+        this.quantidade = TratamentoDadosUtil.tratarInteger(quantidade);
     }
 
     public void setMargemLucro(Double margemLucro) {
-        this.margemLucro = margemLucro;
+        this.margemLucro = TratamentoDadosUtil.tratarDouble(margemLucro);
     }
 
+    //Setters Logistica e Operacao
     public void setRegiao(String regiao) {
-        this.regiao = regiao;
+        this.regiao = TratamentoDadosUtil.tratarString(regiao);
     }
 
     public void setStatusEntrega(String statusEntrega) {
-        this.statusEntrega = statusEntrega;
+        this.statusEntrega = TratamentoDadosUtil.tratarString(statusEntrega);
     }
 
     public void setTempoEntregaDias(Integer tempoEntregaDias) {
-        this.tempoEntregaDias = tempoEntregaDias;
+        this.tempoEntregaDias = TratamentoDadosUtil.tratarInteger(tempoEntregaDias);
     }
 
     public void setVendedorId(String vendedorId) {
-        this.vendedorId = vendedorId;
+        this.vendedorId = TratamentoDadosUtil.tratarString(vendedorId);
     }
+
 }
+
