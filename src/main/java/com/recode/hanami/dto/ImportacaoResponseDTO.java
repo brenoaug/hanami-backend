@@ -9,7 +9,6 @@ public class ImportacaoResponseDTO {
     @JsonProperty("linhas_processadas")
     private Integer linhasProcessadas;
 
-    // Construtor para facilitar o uso no Controller
     public ImportacaoResponseDTO(String status, Integer linhasProcessadas) {
         this.status = status;
         this.linhasProcessadas = linhasProcessadas;

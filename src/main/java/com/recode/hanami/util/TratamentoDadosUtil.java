@@ -3,13 +3,13 @@ package com.recode.hanami.util;
 import java.time.LocalDate;
 
 public class TratamentoDadosUtil {
-    private TratamentoDadosUtil(){}
+    private TratamentoDadosUtil() {
+    }
 
     public static String tratarString(String valor) {
-        if (valor == null || valor.trim().isEmpty()) {
-            return "não informado/não cadastrado";
-        }
-        return valor.trim().toLowerCase();
+        return (valor == null || valor.trim().isEmpty()) ?
+                "não informado/não cadastrado" :
+                valor.trim().toLowerCase();
     }
 
     public static Integer tratarInteger(Integer valor) {
@@ -25,8 +25,6 @@ public class TratamentoDadosUtil {
     }
 
     public static LocalDate tratarData(LocalDate valor) {
-        if(valor == null)
-            return LocalDate.of(1900, 1, 1);
-        return valor;
+        return (valor == null) ? LocalDate.of(1900, 1, 1) : valor;
     }
 }

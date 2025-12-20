@@ -71,6 +71,105 @@ public class DadosArquivoDTO {
     public DadosArquivoDTO() {
     }
 
+    public String getIdTransacao() {
+        return idTransacao;
+    }
+
+    public LocalDate getDataVenda() {
+        return dataVenda;
+    }
+
+    public Double getValorFinal() {
+        return valorFinal;
+    }
+
+    public Double getSubtotal() {
+        return subtotal;
+    }
+
+    public Double getDescontoPercent() {
+        return descontoPercent;
+    }
+
+    public String getCanalVenda() {
+        return canalVenda;
+    }
+
+    public String getFormaPagamento() {
+        return formaPagamento;
+    }
+
+    public String getClienteId() {
+        return clienteId;
+    }
+
+    public String getNomeCliente() {
+        return nomeCliente;
+    }
+
+    public Integer getIdadeCliente() {
+        return idadeCliente;
+    }
+
+    public String getGeneroCliente() {
+        return generoCliente;
+    }
+
+    public String getCidadeCliente() {
+        return cidadeCliente;
+    }
+
+    public String getEstadoCliente() {
+        return estadoCliente;
+    }
+
+    public Double getRendaEstimada() {
+        return rendaEstimada;
+    }
+
+    public String getProdutoId() {
+        return produtoId;
+    }
+
+    public String getNomeProduto() {
+        return nomeProduto;
+    }
+
+    public String getCategoria() {
+        return categoria;
+    }
+
+    public String getMarca() {
+        return marca;
+    }
+
+    public Double getPrecoUnitario() {
+        return precoUnitario;
+    }
+
+    public Integer getQuantidade() {
+        return quantidade;
+    }
+
+    public Double getMargemLucro() {
+        return margemLucro;
+    }
+
+    public String getRegiao() {
+        return regiao;
+    }
+
+    public String getStatusEntrega() {
+        return statusEntrega;
+    }
+
+    public Integer getTempoEntregaDias() {
+        return tempoEntregaDias;
+    }
+
+    public String getVendedorId() {
+        return vendedorId;
+    }
 
     //Setters Vendas
     public void setIdTransacao(String idTransacao) {
