@@ -1,12 +1,17 @@
 package com.recode.hanami.service;
 
 import com.recode.hanami.dto.DadosArquivoDTO;
-import com.recode.hanami.entities.*;
+import com.recode.hanami.entities.Cliente;
+import com.recode.hanami.entities.Produto;
+import com.recode.hanami.entities.Venda;
+import com.recode.hanami.entities.Vendedor;
 import com.recode.hanami.exceptions.DadosInvalidosException;
-import com.recode.hanami.repository.*;
+import com.recode.hanami.repository.ClienteRepository;
+import com.recode.hanami.repository.ProdutoRepository;
+import com.recode.hanami.repository.VendaRepository;
+import com.recode.hanami.repository.VendedorRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 
 import java.util.List;
 

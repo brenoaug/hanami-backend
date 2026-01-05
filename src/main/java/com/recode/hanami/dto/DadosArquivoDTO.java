@@ -8,272 +8,120 @@ import com.recode.hanami.util.TratamentoDadosUtil;
 import java.time.LocalDate;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class DadosArquivoDTO {
-    // Vendas
-    @JsonProperty("id_transacao")
-    private String idTransacao;
-    @JsonProperty("data_venda")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private LocalDate dataVenda;
-    @JsonProperty("valor_final")
-    private Double valorFinal;
-    @JsonProperty("subtotal")
-    private Double subtotal;
-    @JsonProperty("desconto_percent")
-    private Double descontoPercent;
-    @JsonProperty("canal_venda")
-    private String canalVenda;
-    @JsonProperty("forma_pagamento")
-    private String formaPagamento;
+public record DadosArquivoDTO(
+        // Vendas
+        @JsonProperty("id_transacao")
+        String idTransacao,
 
-    //Cliente
-    @JsonProperty("cliente_id")
-    private String clienteId;
-    @JsonProperty("nome_cliente")
-    private String nomeCliente;
-    @JsonProperty("idade_cliente")
-    private Integer idadeCliente;
-    @JsonProperty("genero_cliente")
-    private String generoCliente;
-    @JsonProperty("cidade_cliente")
-    private String cidadeCliente;
-    @JsonProperty("estado_cliente")
-    private String estadoCliente;
-    @JsonProperty("renda_estimada")
-    private Double rendaEstimada;
+        @JsonProperty("data_venda")
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+        LocalDate dataVenda,
 
-    //Produto
-    @JsonProperty("produto_id")
-    private String produtoId;
-    @JsonProperty("nome_produto")
-    private String nomeProduto;
-    @JsonProperty("categoria")
-    private String categoria;
-    @JsonProperty("marca")
-    private String marca;
-    @JsonProperty("preco_unitario")
-    private Double precoUnitario;
-    @JsonProperty("quantidade")
-    private Integer quantidade;
-    @JsonProperty("margem_lucro")
-    private Double margemLucro;
+        @JsonProperty("valor_final")
+        Double valorFinal,
 
-    //Logistica e Operacao
-    @JsonProperty("regiao")
-    private String regiao;
-    @JsonProperty("status_entrega")
-    private String statusEntrega;
-    @JsonProperty("tempo_entrega_dias")
-    private Integer tempoEntregaDias;
-    @JsonProperty("vendedor_id")
-    private String vendedorId;
+        @JsonProperty("subtotal")
+        Double subtotal,
 
-    public DadosArquivoDTO() {
+        @JsonProperty("desconto_percent")
+        Double descontoPercent,
+
+        @JsonProperty("canal_venda")
+        String canalVenda,
+
+        @JsonProperty("forma_pagamento")
+        String formaPagamento,
+
+        // Cliente
+        @JsonProperty("cliente_id")
+        String clienteId,
+
+        @JsonProperty("nome_cliente")
+        String nomeCliente,
+
+        @JsonProperty("idade_cliente")
+        Integer idadeCliente,
+
+        @JsonProperty("genero_cliente")
+        String generoCliente,
+
+        @JsonProperty("cidade_cliente")
+        String cidadeCliente,
+
+        @JsonProperty("estado_cliente")
+        String estadoCliente,
+
+        @JsonProperty("renda_estimada")
+        Double rendaEstimada,
+
+        // Produto
+        @JsonProperty("produto_id")
+        String produtoId,
+
+        @JsonProperty("nome_produto")
+        String nomeProduto,
+
+        @JsonProperty("categoria")
+        String categoria,
+
+        @JsonProperty("marca")
+        String marca,
+
+        @JsonProperty("preco_unitario")
+        Double precoUnitario,
+
+        @JsonProperty("quantidade")
+        Integer quantidade,
+
+        @JsonProperty("margem_lucro")
+        Double margemLucro,
+
+        // Logistica e Operacao
+        @JsonProperty("regiao")
+        String regiao,
+
+        @JsonProperty("status_entrega")
+        String statusEntrega,
+
+        @JsonProperty("tempo_entrega_dias")
+        Integer tempoEntregaDias,
+
+        @JsonProperty("vendedor_id")
+        String vendedorId
+) {
+
+    public DadosArquivoDTO {
+        // Vendas
+        idTransacao = TratamentoDadosUtil.tratarString(idTransacao);
+        dataVenda = TratamentoDadosUtil.tratarData(dataVenda);
+        valorFinal = TratamentoDadosUtil.tratarDouble(valorFinal);
+        subtotal = TratamentoDadosUtil.tratarDouble(subtotal);
+        descontoPercent = TratamentoDadosUtil.tratarDouble(descontoPercent);
+        canalVenda = TratamentoDadosUtil.tratarString(canalVenda);
+        formaPagamento = TratamentoDadosUtil.tratarString(formaPagamento);
+
+        // Cliente
+        clienteId = TratamentoDadosUtil.tratarString(clienteId);
+        nomeCliente = TratamentoDadosUtil.tratarString(nomeCliente);
+        idadeCliente = TratamentoDadosUtil.tratarInteger(idadeCliente);
+        generoCliente = TratamentoDadosUtil.tratarGenero(generoCliente);
+        cidadeCliente = TratamentoDadosUtil.tratarString(cidadeCliente);
+        estadoCliente = TratamentoDadosUtil.tratarString(estadoCliente);
+        rendaEstimada = TratamentoDadosUtil.tratarDouble(rendaEstimada);
+
+        // Produto
+        produtoId = TratamentoDadosUtil.tratarString(produtoId);
+        nomeProduto = TratamentoDadosUtil.tratarString(nomeProduto);
+        categoria = TratamentoDadosUtil.tratarString(categoria);
+        marca = TratamentoDadosUtil.tratarString(marca);
+        precoUnitario = TratamentoDadosUtil.tratarDouble(precoUnitario);
+        quantidade = TratamentoDadosUtil.tratarInteger(quantidade);
+        margemLucro = TratamentoDadosUtil.tratarDouble(margemLucro);
+
+        // Logistica e Operacao
+        regiao = TratamentoDadosUtil.tratarString(regiao);
+        statusEntrega = TratamentoDadosUtil.tratarString(statusEntrega);
+        tempoEntregaDias = TratamentoDadosUtil.tratarInteger(tempoEntregaDias);
+        vendedorId = TratamentoDadosUtil.tratarString(vendedorId);
     }
-
-    public String getIdTransacao() {
-        return idTransacao;
-    }
-
-    public LocalDate getDataVenda() {
-        return dataVenda;
-    }
-
-    public Double getValorFinal() {
-        return valorFinal;
-    }
-
-    public Double getSubtotal() {
-        return subtotal;
-    }
-
-    public Double getDescontoPercent() {
-        return descontoPercent;
-    }
-
-    public String getCanalVenda() {
-        return canalVenda;
-    }
-
-    public String getFormaPagamento() {
-        return formaPagamento;
-    }
-
-    public String getClienteId() {
-        return clienteId;
-    }
-
-    public String getNomeCliente() {
-        return nomeCliente;
-    }
-
-    public Integer getIdadeCliente() {
-        return idadeCliente;
-    }
-
-    public String getGeneroCliente() {
-        return generoCliente;
-    }
-
-    public String getCidadeCliente() {
-        return cidadeCliente;
-    }
-
-    public String getEstadoCliente() {
-        return estadoCliente;
-    }
-
-    public Double getRendaEstimada() {
-        return rendaEstimada;
-    }
-
-    public String getProdutoId() {
-        return produtoId;
-    }
-
-    public String getNomeProduto() {
-        return nomeProduto;
-    }
-
-    public String getCategoria() {
-        return categoria;
-    }
-
-    public String getMarca() {
-        return marca;
-    }
-
-    public Double getPrecoUnitario() {
-        return precoUnitario;
-    }
-
-    public Integer getQuantidade() {
-        return quantidade;
-    }
-
-    public Double getMargemLucro() {
-        return margemLucro;
-    }
-
-    public String getRegiao() {
-        return regiao;
-    }
-
-    public String getStatusEntrega() {
-        return statusEntrega;
-    }
-
-    public Integer getTempoEntregaDias() {
-        return tempoEntregaDias;
-    }
-
-    public String getVendedorId() {
-        return vendedorId;
-    }
-
-    //Setters Vendas
-    public void setIdTransacao(String idTransacao) {
-        this.idTransacao = TratamentoDadosUtil.tratarString(idTransacao);
-    }
-
-    public void setDataVenda(LocalDate dataVenda) {
-        this.dataVenda = TratamentoDadosUtil.tratarData(dataVenda);
-    }
-
-    public void setValorFinal(Double valorFinal) {
-        this.valorFinal = TratamentoDadosUtil.tratarDouble(valorFinal);
-    }
-
-    public void setSubtotal(Double subtotal) {
-        this.subtotal = TratamentoDadosUtil.tratarDouble(subtotal);
-    }
-
-    public void setDescontoPercent(Double descontoPercent) {
-        this.descontoPercent = TratamentoDadosUtil.tratarDouble(descontoPercent);
-    }
-
-    public void setCanalVenda(String canalVenda) {
-        this.canalVenda = TratamentoDadosUtil.tratarString(canalVenda);
-    }
-
-    public void setFormaPagamento(String formaPagamento) {
-        this.formaPagamento = TratamentoDadosUtil.tratarString(formaPagamento);
-    }
-
-    //Setters Cliente
-    public void setClienteId(String clienteId) {
-        this.clienteId = TratamentoDadosUtil.tratarString(clienteId);
-    }
-
-    public void setNomeCliente(String nomeCliente) {
-        this.nomeCliente = TratamentoDadosUtil.tratarString(nomeCliente);
-    }
-
-    public void setIdadeCliente(Integer idadeCliente) {
-        this.idadeCliente = TratamentoDadosUtil.tratarInteger(idadeCliente);
-    }
-
-    public void setGeneroCliente(String generoCliente) {
-        this.generoCliente = TratamentoDadosUtil.tratarGenero(generoCliente);
-    }
-
-    public void setCidadeCliente(String cidadeCliente) {
-        this.cidadeCliente = TratamentoDadosUtil.tratarString(cidadeCliente);
-    }
-
-    public void setEstadoCliente(String estadoCliente) {
-        this.estadoCliente = TratamentoDadosUtil.tratarString(estadoCliente);
-    }
-
-    public void setRendaEstimada(Double rendaEstimada) {
-        this.rendaEstimada = TratamentoDadosUtil.tratarDouble(rendaEstimada);
-    }
-
-    //Setters Produto
-    public void setProdutoId(String produtoId) {
-        this.produtoId = TratamentoDadosUtil.tratarString(produtoId);
-    }
-
-    public void setNomeProduto(String nomeProduto) {
-        this.nomeProduto = TratamentoDadosUtil.tratarString(nomeProduto);
-    }
-
-    public void setCategoria(String categoria) {
-        this.categoria = TratamentoDadosUtil.tratarString(categoria);
-    }
-
-    public void setMarca(String marca) {
-        this.marca = TratamentoDadosUtil.tratarString(marca);
-    }
-
-    public void setPrecoUnitario(Double precoUnitario) {
-        this.precoUnitario = TratamentoDadosUtil.tratarDouble(precoUnitario);
-    }
-
-    public void setQuantidade(Integer quantidade) {
-        this.quantidade = TratamentoDadosUtil.tratarInteger(quantidade);
-    }
-
-    public void setMargemLucro(Double margemLucro) {
-        this.margemLucro = TratamentoDadosUtil.tratarDouble(margemLucro);
-    }
-
-    //Setters Logistica e Operacao
-    public void setRegiao(String regiao) {
-        this.regiao = TratamentoDadosUtil.tratarString(regiao);
-    }
-
-    public void setStatusEntrega(String statusEntrega) {
-        this.statusEntrega = TratamentoDadosUtil.tratarString(statusEntrega);
-    }
-
-    public void setTempoEntregaDias(Integer tempoEntregaDias) {
-        this.tempoEntregaDias = TratamentoDadosUtil.tratarInteger(tempoEntregaDias);
-    }
-
-    public void setVendedorId(String vendedorId) {
-        this.vendedorId = TratamentoDadosUtil.tratarString(vendedorId);
-    }
-
 }
-
