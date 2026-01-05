@@ -434,20 +434,6 @@ Os logs da aplicação são configurados para facilitar debugging e monitorament
 2026-01-05 14:30:26 [http-nio-8080-exec-1] DEBUG c.r.h.c.CsvController - Arquivo convertido com sucesso
 ```
 
-## Executando Testes
-
-O projeto inclui testes automatizados:
-
-```bash
-mvn test
-```
-
-Para executar com relatório de cobertura:
-
-```bash
-mvn clean test jacoco:report
-```
-
 ## Notas Importantes
 
 - **Projeto de Estudos:** Desenvolvido em parceria com a Recode e Instituto Coca-Cola para demonstrar habilidades técnicas
@@ -474,5 +460,7 @@ Projeto desenvolvido por **Breno Augusto** como parte do portfólio técnico em 
 ---
 
 ## Licença
+
+Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE) para mais detalhes.
 
 Este projeto foi desenvolvido para fins educacionais e de demonstração de habilidades técnicas.
