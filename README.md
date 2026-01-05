@@ -394,20 +394,16 @@ ORDER BY RECEITA_TOTAL DESC;
 
 ## Conceitos e Boas Práticas Aplicadas
 
-Este projeto demonstra conhecimento em:
+Este projeto possui:
 
-- **Arquitetura em Camadas** - Separação clara de responsabilidades (Controller, Service, Repository, Entity)  
-- **Injeção de Dependência** - Uso do Spring Framework para gerenciamento de beans  
+- **Arquitetura em Camadas** - Separação clara de responsabilidades (Controller, Service, Repository, Entity)
 - **REST API** - Endpoints seguindo padrões RESTful  
 - **Persistência de Dados** - JPA/Hibernate com relacionamentos entre entidades  
 - **DTOs** - Objetos de transferência de dados para desacoplar camadas  
-- **Records do Java** - Uso de records para imutabilidade e código conciso  
-- **Tratamento de Exceções** - Exceções personalizadas e tratamento centralizado  
-- **Validação de Dados** - Validação em múltiplas camadas da aplicação  
+- **Records do Java** - Uso de records para imutabilidade e código conciso   
 - **Logging Estruturado** - Sistema de logs com diferentes níveis e rotação de arquivos  
 - **Transações** - Uso de `@Transactional` para garantir integridade dos dados  
-- **Documentação Automática** - Swagger/OpenAPI para documentação interativa  
-- **Clean Code** - Código limpo, legível e bem organizado  
+- **Documentação Automática** - Swagger/OpenAPI para documentação interativa
 
 ## Estrutura de Logs
 
