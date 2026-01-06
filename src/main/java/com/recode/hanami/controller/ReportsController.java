@@ -3,6 +3,13 @@ package com.recode.hanami.controller;
 import com.recode.hanami.entities.Venda;
 import com.recode.hanami.repository.VendaRepository;
 import com.recode.hanami.service.CalculadoraMetricasService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +22,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("hanami/reports")
+@Tag(name = "Relatórios e Análises", description = "Endpoints para geração de relatórios e análises de vendas")
 public class ReportsController {
 
     private static final Logger logger = LoggerFactory.getLogger(ReportsController.class);
@@ -22,13 +30,56 @@ public class ReportsController {
     private final VendaRepository vendaRepository;
     private final CalculadoraMetricasService calculadoraService;
 
-    // Injeção de dependência via construtor
     public ReportsController(VendaRepository vendaRepository,
                              CalculadoraMetricasService calculadoraService) {
         this.vendaRepository = vendaRepository;
         this.calculadoraService = calculadoraService;
     }
 
+    @Operation(
+            summary = "Métricas financeiras globais",
+            description = "Retorna um resumo consolidado das principais métricas financeiras da empresa: " +
+                    "receita líquida total, custo total operacional e lucro bruto. " +
+                    "Este endpoint processa todas as transações de vendas e calcula os indicadores-chave de desempenho (KPIs) financeiros."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Métricas calculadas com sucesso",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "Exemplo de resposta",
+                                    description = "Resumo financeiro consolidado de todas as transações",
+                                    value = """
+                                            {
+                                              "receita_liquida": 458900.75,
+                                              "custo_total": 321230.50,
+                                              "lucro_bruto": 137670.25
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Sem dados disponíveis",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "Resposta sem vendas",
+                                    description = "Quando não há transações registradas no sistema",
+                                    value = """
+                                            {
+                                              "receita_liquida": 0.0,
+                                              "custo_total": 0.0,
+                                              "lucro_bruto": 0.0
+                                            }
+                                            """
+                            )
+                    )
+            )
+    })
     @GetMapping("/financial-metrics")
     public ResponseEntity<Map<String, Double>> getFinancialMetrics() {
         logger.debug("Iniciando cálculo das métricas financeiras gerais");
@@ -39,61 +90,111 @@ public class ReportsController {
         Double custoTotal = calculadoraService.calcularCustoTotalGeral(vendas);
         Double lucroBruto = calculadoraService.calcularLucroBrutoGeral(vendas);
 
-        Map<String, Double> metrics = new HashMap<>();
+        Map<String, Double> metrics = new LinkedHashMap<>();
         metrics.put("receita_liquida", receitaLiquida);
         metrics.put("custo_total", custoTotal);
         metrics.put("lucro_bruto", lucroBruto);
 
         return ResponseEntity.ok(metrics);
     }
+
+    @Operation(
+            summary = "Análise detalhada por produto",
+            description = """
+                    Retorna uma análise agregada das vendas agrupadas por produto.
+                    
+                    **Campos retornados:**
+                    - `nome_produto`: Nome do produto
+                    - `quantidade_vendida`: Total de unidades vendidas do produto
+                    - `total_arrecadado`: Valor total de receita gerado pelo produto
+                    
+                    **Parâmetros de ordenação disponíveis:**
+                    - `nome` (padrão) - Por nome do produto (alfabético)
+                    - `quantidade` - Por quantidade vendida (maior → menor)
+                    - `total` - Por total arrecadado (maior → menor)
+                    """
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Análise realizada com sucesso",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "Exemplo de resposta",
+                                    description = "Lista de produtos com totais agregados",
+                                    value = """
+                                            [
+                                              {
+                                                "nome_produto": "Notebook Dell Inspiron",
+                                                "quantidade_vendida": 125,
+                                                "total_arrecadado": 400000.00
+                                              },
+                                              {
+                                                "nome_produto": "Mouse Logitech MX Master",
+                                                "quantidade_vendida": 350,
+                                                "total_arrecadado": 98000.00
+                                              }
+                                            ]
+                                            """
+                            )
+                    )
+            )
+    })
     @GetMapping("/product-analysis")
     public ResponseEntity<List<Map<String, Object>>> analisarLucros(
-            @RequestParam(value = "sort_by", required = false, defaultValue = "id") String sortBy
+            @Parameter(
+                    description = "Critério de ordenação dos resultados. **Opções disponíveis:**\n\n" +
+                            "- `nome` (padrão) - Ordena por nome do produto (alfabético)\n" +
+                            "- `quantidade` - Ordena por quantidade vendida (maior para menor)\n" +
+                            "- `total` - Ordena por total arrecadado (maior para menor)\n\n" +
+                            "**Exemplo de uso:** `/hanami/reports/product-analysis?sort_by=total`",
+                    example = "total"
+            )
+            @RequestParam(value = "sort_by", required = false, defaultValue = "nome") String sortBy
     ) {
-        logger.debug("Iniciando análise de lucros por produto");
+        logger.debug("Iniciando análise agregada por produto");
 
-        List<Venda> todasVendas = vendaRepository.findAll();
-        List<Map<String, Object>> relatorio = new ArrayList<>();
+        List<Venda> todasVendas = vendaRepository.findAllWithRelations();
+
+        Map<String, Map<String, Object>> produtosMap = new LinkedHashMap<>();
 
         for (Venda venda : todasVendas) {
-            Double receita = calculadoraService.calcularReceitaLiquida(venda);
-            Double custo = calculadoraService.calcularCustoTotalVenda(venda);
-            Double lucro = calculadoraService.calcularLucroBruto(venda);
+            String nomeProduto = venda.getProduto().getNomeProduto();
+            Integer quantidade = venda.getQuantidade() != null ? venda.getQuantidade() : 0;
+            Double receita = venda.getValorFinal() != null ? venda.getValorFinal() : 0.0;
 
-            double margemNum = (receita != null && receita > 0) ? (lucro / receita) * 100 : 0.0;
 
-            Map<String, Object> linhaRelatorio = new HashMap<>();
-            linhaRelatorio.put("id_transacao", venda.getId());
-            linhaRelatorio.put("nome_produto", venda.getProduto().getNomeProduto());
-            linhaRelatorio.put("receita_liquida", receita);
-            linhaRelatorio.put("custo_estimado", calculadoraService.arredondar(custo));
-            linhaRelatorio.put("quantidade_vendida", venda.getQuantidade());
-            linhaRelatorio.put("lucro_bruto", lucro);
-            linhaRelatorio.put("margem_real_valor", margemNum);
-            linhaRelatorio.put("margem_real_percent", String.format("%.2f%%", margemNum));
+            if (produtosMap.containsKey(nomeProduto)) {
+                Map<String, Object> produtoExistente = produtosMap.get(nomeProduto);
+                Integer qtdAtual = (Integer) produtoExistente.get("quantidade_vendida");
+                Double totalAtual = (Double) produtoExistente.get("total_arrecadado");
 
-            relatorio.add(linhaRelatorio);
+                produtoExistente.put("quantidade_vendida", qtdAtual + quantidade);
+                produtoExistente.put("total_arrecadado", calculadoraService.arredondar(totalAtual + receita));
+            } else {
+                Map<String, Object> novoProduto = new LinkedHashMap<>();
+                novoProduto.put("nome_produto", nomeProduto);
+                novoProduto.put("quantidade_vendida", quantidade);
+                novoProduto.put("total_arrecadado", calculadoraService.arredondar(receita));
+
+                produtosMap.put(nomeProduto, novoProduto);
+            }
         }
+
+        List<Map<String, Object>> relatorio = new ArrayList<>(produtosMap.values());
+
 
         if (sortBy != null) {
             switch (sortBy.toLowerCase()) {
-                case "lucro":
-                    relatorio.sort((a, b) -> ((Double) b.get("lucro_bruto")).compareTo((Double) a.get("lucro_bruto")));
-                    break;
-                case "receita":
-                    relatorio.sort((a, b) -> ((Double) b.get("receita_liquida")).compareTo((Double) a.get("receita_liquida")));
-                    break;
-                case "margem":
-                    relatorio.sort((a, b) -> ((Double) b.get("margem_real_valor")).compareTo((Double) a.get("margem_real_valor")));
-                    break;
-                case "custo":
-                    relatorio.sort((a, b) -> ((Double) b.get("custo_estimado")).compareTo((Double) a.get("custo_estimado")));
-                    break;
                 case "quantidade":
                     relatorio.sort((a, b) -> ((Integer) b.get("quantidade_vendida")).compareTo((Integer) a.get("quantidade_vendida")));
                     break;
+                case "total":
+                    relatorio.sort((a, b) -> ((Double) b.get("total_arrecadado")).compareTo((Double) a.get("total_arrecadado")));
+                    break;
                 default:
-                    relatorio.sort(Comparator.comparing(a -> ((String) a.get("id_transacao"))));
+                    relatorio.sort(Comparator.comparing(a -> ((String) a.get("nome_produto"))));
                     break;
             }
         }
@@ -101,6 +202,31 @@ public class ReportsController {
         return ResponseEntity.ok(relatorio);
     }
 
+    @Operation(
+            summary = "Resumo financeiro das vendas",
+            description = "Retorna um resumo das vendas: " +
+                    "total de vendas, número de transações e média por transação."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Resumo calculado com sucesso",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "Exemplo de resposta",
+                                    value = """
+                                            {
+                                              "titulo": "Resumo Financeiro Hanami",
+                                              "total_vendas": 245780.50,
+                                              "numero_transacoes": 356,
+                                              "media_por_transacoes": 690.45
+                                            }
+                                            """
+                            )
+                    )
+            )
+    })
     @GetMapping("/sales-summary")
     public ResponseEntity<Map<String, Object>> resumoFinanceiro() {
         logger.debug("Iniciando cálculo do resumo financeiro das vendas");
@@ -111,7 +237,7 @@ public class ReportsController {
         Integer numTransacoes = calculadoraService.calcularNumeroTransacoes(todasVendas);
         Double mediaTransacao = calculadoraService.calcularMediaPorTransacao(todasVendas);
 
-        Map<String, Object> dashboard = new HashMap<>();
+        Map<String, Object> dashboard = new LinkedHashMap<>();
         dashboard.put("titulo", "Resumo Financeiro Hanami");
         dashboard.put("total_vendas", totalVendas);
         dashboard.put("numero_transacoes", numTransacoes);

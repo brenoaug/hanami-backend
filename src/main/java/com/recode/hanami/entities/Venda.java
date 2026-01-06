@@ -1,10 +1,12 @@
 package com.recode.hanami.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 
 @Entity
 @Table(name = "vendas")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Venda {
 
     @Id
@@ -42,15 +44,15 @@ public class Venda {
     @Column(name = "tempo_entrega_dias")
     private Integer tempoEntregaDias;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cliente_id")
     private Cliente cliente;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "produto_id")
     private Produto produto;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "vendedor_id")
     private Vendedor vendedor;
 

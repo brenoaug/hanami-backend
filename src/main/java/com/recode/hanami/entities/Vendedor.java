@@ -1,9 +1,11 @@
 package com.recode.hanami.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 @Entity
 @Table(name = "vendedores")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Vendedor {
 
     @Id

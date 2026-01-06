@@ -97,10 +97,16 @@ public class CalculadoraMetricasService {
     public Double calcularLucroBrutoGeral(List<Venda> vendas) {
         if (vendas == null || vendas.isEmpty()) return 0.0;
 
-        double somaLucros = vendas.stream()
-                .mapToDouble(this::calcularLucroBruto) // Reusa a lógica unitária
+        // Calcula o lucro como: Receita Total - Custo Total
+        // Isso evita acúmulo de erros de arredondamento
+        double receitaTotal = vendas.stream()
+                .mapToDouble(v -> v.getValorFinal() != null ? v.getValorFinal() : 0.0)
                 .sum();
 
-        return arredondar(somaLucros);
+        double custoTotal = vendas.stream()
+                .mapToDouble(this::calcularCustoTotalVenda)
+                .sum();
+
+        return arredondar(receitaTotal - custoTotal);
     }
 }

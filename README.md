@@ -245,8 +245,121 @@ A API possui documentação interativa gerada automaticamente pelo **SpringDoc O
 - `POST /hanami/upload-file` - Upload de arquivo CSV
 
 #### Reports Controller
-- `GET /hanami/reports/financial-metrics` - Métricas financeiras gerais
-- `GET /hanami/reports/product-analysis` - Análise detalhada por produto
+- `GET /hanami/reports/financial-metrics` - Métricas financeiras consolidadas (receita, custos, lucro)
+- `GET /hanami/reports/product-analysis` - Análise agregada por produto (quantidade e receita total)
+- `GET /hanami/reports/sales-summary` - Resumo executivo das vendas
+
+## Detalhes dos Endpoints da API
+
+### 1. Upload de Arquivo CSV
+**Endpoint:** `POST /hanami/upload-file`
+
+**Descrição:** Recebe um arquivo CSV, valida sua estrutura e persiste os dados no banco H2.
+
+**Content-Type:** `multipart/form-data`
+
+**Parâmetros:**
+- `file` (form-data) - Arquivo CSV contendo dados de vendas
+
+**Resposta de Sucesso (200):**
+```json
+{
+  "status": "sucesso",
+  "registrosProcessados": 10000
+}
+```
+
+**Validações:**
+- Verifica se o arquivo tem extensão `.csv`
+- Valida se todas as colunas obrigatórias estão presentes
+- Verifica integridade dos dados (tipos, formatos, valores nulos)
+
+---
+
+### 2. Métricas Financeiras
+**Endpoint:** `GET /hanami/reports/financial-metrics`
+
+**Descrição:** Retorna um resumo consolidado das principais métricas financeiras: receita líquida total, custo total operacional e lucro bruto.
+
+**Resposta de Sucesso (200):**
+```json
+{
+  "receita_liquida": 102614924.62,
+  "custo_total": 86384699.09,
+  "lucro_bruto": 16230225.53
+}
+```
+
+**Cálculos:**
+- `receita_liquida` = Soma de todos os `valor_final` das vendas
+- `custo_total` = Soma dos custos estimados (baseado em `precoUnitario / (1 + margemLucro)`)
+- `lucro_bruto` = `receita_liquida - custo_total` (calculado sem arredondamento intermediário)
+
+**Nota Técnica:** O lucro bruto é calculado diretamente da diferença entre receita e custo total, evitando acúmulo de erros de arredondamento.
+
+---
+
+### 3. Análise por Produto (Agregada)
+**Endpoint:** `GET /hanami/reports/product-analysis`
+
+**Descrição:** Retorna uma análise agregada das vendas agrupadas por produto, somando a quantidade vendida e o total arrecadado de cada produto.
+
+**Parâmetros de Query (opcionais):**
+- `sort_by` (string): Critério de ordenação
+  - `nome` (padrão) - Ordena alfabeticamente por nome do produto
+  - `quantidade` - Ordena por quantidade total vendida (decrescente)
+  - `total` - Ordena por receita total arrecadada (decrescente)
+
+**Exemplo de Requisição:**
+```
+GET /hanami/reports/product-analysis?sort_by=total
+```
+
+**Resposta de Sucesso (200):**
+```json
+[
+  {
+    "nome_produto": "webcam hd",
+    "quantidade_vendida": 450,
+    "total_arrecadado": 125450.75
+  },
+  {
+    "nome_produto": "mouse logitech",
+    "quantidade_vendida": 1200,
+    "total_arrecadado": 84000.00
+  }
+]
+```
+
+**Funcionalidade:** 
+- Agrupa todas as vendas pelo nome do produto
+- Soma as quantidades vendidas de cada produto
+- Soma o valor total arrecadado por produto
+- Retorna lista ordenada conforme parâmetro `sort_by`
+
+---
+
+### 4. Resumo de Vendas
+**Endpoint:** `GET /hanami/reports/sales-summary`
+
+**Descrição:** Retorna um dashboard executivo com resumo geral das vendas: total de vendas, número de transações e média por transação.
+
+**Resposta de Sucesso (200):**
+```json
+{
+  "titulo": "Resumo Financeiro Hanami",
+  "total_vendas": 102614924.62,
+  "numero_transacoes": 10000,
+  "media_por_transacoes": 10261.49
+}
+```
+
+**Cálculos:**
+- `total_vendas` = Soma de todos os `valor_final`
+- `numero_transacoes` = Contagem total de registros de vendas
+- `media_por_transacoes` = `total_vendas / numero_transacoes`
+
+---
 
 ## Testando com Postman ou Insomnia
 
@@ -287,22 +400,63 @@ A API possui documentação interativa gerada automaticamente pelo **SpringDoc O
 3. **Resposta esperada:**
    ```json
    {
-     "receita_liquida": 150000.50,
-     "custo_total": 90000.30,
-     "lucro_bruto": 60000.20
+     "receita_liquida": 102614924.62,
+     "custo_total": 86384699.09,
+     "lucro_bruto": 16230225.53
    }
    ```
+   
+   **Nota:** O `lucro_bruto` é calculado como `receita_liquida - custo_total`, garantindo precisão matemática sem acúmulo de erros de arredondamento.
 
-#### 3. Análise por Produto
+#### 3. Análise por Produto (Agregada)
 
 1. Crie uma nova requisição:
    - **Método:** `GET`
-   - **URL:** `http://localhost:8080/hanami/reports/product-analysis?sort_by=lucro`
+   - **URL:** `http://localhost:8080/hanami/reports/product-analysis?sort_by=total`
    
 2. **Parâmetros opcionais (Query Params):**
-   - `sort_by`: `id`, `lucro`, `receita`, `margem`, `custo`, `quantidade`
+   - `sort_by`: 
+     - `nome` (padrão) - Ordena por nome do produto (A-Z)
+     - `quantidade` - Ordena por quantidade total vendida (maior → menor)
+     - `total` - Ordena por receita total arrecadada (maior → menor)
    
 3. Clique em **"Send"**
+
+4. **Resposta esperada:**
+   ```json
+   [
+     {
+       "nome_produto": "webcam hd",
+       "quantidade_vendida": 450,
+       "total_arrecadado": 125450.75
+     },
+     {
+       "nome_produto": "mouse logitech",
+       "quantidade_vendida": 1200,
+       "total_arrecadado": 84000.00
+     }
+   ]
+   ```
+   
+   **Funcionalidade:** Este endpoint agrupa todas as vendas por produto, somando as quantidades vendidas e o total de receita gerado por cada produto.
+
+#### 4. Resumo de Vendas
+
+1. Crie uma nova requisição:
+   - **Método:** `GET`
+   - **URL:** `http://localhost:8080/hanami/reports/sales-summary`
+   
+2. Clique em **"Send"**
+
+3. **Resposta esperada:**
+   ```json
+   {
+     "titulo": "Resumo Financeiro Hanami",
+     "total_vendas": 102614924.62,
+     "numero_transacoes": 10000,
+     "media_por_transacoes": 10261.49
+   }
+   ```
 
 ---
 
@@ -369,21 +523,51 @@ O projeto utiliza o **H2 Database**, um banco de dados em memória ideal para de
 ### Consultas SQL Úteis:
 
 ```sql
--- Ver todas as vendas
-SELECT * FROM VENDAS;
+-- Ver todas as vendas (limitado a 10 para melhor visualização)
+SELECT * FROM VENDAS LIMIT 10;
 
--- Ver todos os clientes
-SELECT * FROM CLIENTES;
+-- Ver todos os clientes únicos
+SELECT * FROM CLIENTES LIMIT 10;
 
--- Ver todos os produtos
-SELECT * FROM PRODUTOS;
+-- Ver todos os produtos únicos
+SELECT * FROM PRODUTOS LIMIT 10;
 
--- Análise de vendas por produto
-SELECT p.NOME_PRODUTO, COUNT(*) as TOTAL_VENDAS, SUM(v.VALOR_FINAL) as RECEITA_TOTAL
+-- Análise agregada de vendas por produto (igual ao endpoint /product-analysis)
+SELECT 
+    p.NOME_PRODUTO, 
+    SUM(v.QUANTIDADE) as QUANTIDADE_VENDIDA, 
+    SUM(v.VALOR_FINAL) as TOTAL_ARRECADADO
 FROM VENDAS v
 JOIN PRODUTOS p ON v.PRODUTO_ID = p.PRODUTO_ID
 GROUP BY p.NOME_PRODUTO
-ORDER BY RECEITA_TOTAL DESC;
+ORDER BY TOTAL_ARRECADADO DESC;
+
+-- Métricas financeiras (igual ao endpoint /financial-metrics)
+SELECT 
+    SUM(v.VALOR_FINAL) as RECEITA_LIQUIDA,
+    COUNT(*) as NUMERO_TRANSACOES,
+    AVG(v.VALOR_FINAL) as MEDIA_POR_TRANSACAO
+FROM VENDAS v;
+
+-- Top 5 produtos mais vendidos por quantidade
+SELECT 
+    p.NOME_PRODUTO, 
+    SUM(v.QUANTIDADE) as TOTAL_QUANTIDADE
+FROM VENDAS v
+JOIN PRODUTOS p ON v.PRODUTO_ID = p.PRODUTO_ID
+GROUP BY p.NOME_PRODUTO
+ORDER BY TOTAL_QUANTIDADE DESC
+LIMIT 5;
+
+-- Top 5 produtos mais lucrativos
+SELECT 
+    p.NOME_PRODUTO, 
+    SUM(v.VALOR_FINAL) as RECEITA_TOTAL
+FROM VENDAS v
+JOIN PRODUTOS p ON v.PRODUTO_ID = p.PRODUTO_ID
+GROUP BY p.NOME_PRODUTO
+ORDER BY RECEITA_TOTAL DESC
+LIMIT 5;
 ```
 
 ### Importante sobre o H2:
@@ -392,18 +576,6 @@ ORDER BY RECEITA_TOTAL DESC;
 - **Ideal para desenvolvimento:** Não requer instalação de banco de dados externo
 - **Para produção:** Substitua por MySQL, PostgreSQL ou outro banco persistente
 
-## Conceitos e Boas Práticas Aplicadas
-
-Este projeto possui:
-
-- **Arquitetura em Camadas** - Separação clara de responsabilidades (Controller, Service, Repository, Entity)
-- **REST API** - Endpoints seguindo padrões RESTful  
-- **Persistência de Dados** - JPA/Hibernate com relacionamentos entre entidades  
-- **DTOs** - Objetos de transferência de dados para desacoplar camadas  
-- **Records do Java** - Uso de records para imutabilidade e código conciso   
-- **Logging Estruturado** - Sistema de logs com diferentes níveis e rotação de arquivos  
-- **Transações** - Uso de `@Transactional` para garantir integridade dos dados  
-- **Documentação Automática** - Swagger/OpenAPI para documentação interativa
 
 ## Estrutura de Logs
 
@@ -430,6 +602,20 @@ Os logs da aplicação são configurados para facilitar debugging e monitorament
 2026-01-05 14:30:26 [http-nio-8080-exec-1] DEBUG c.r.h.c.CsvController - Arquivo convertido com sucesso
 ```
 
+## Executando Testes
+
+O projeto inclui testes automatizados:
+
+```bash
+mvn test
+```
+
+Para executar com relatório de cobertura:
+
+```bash
+mvn clean test jacoco:report
+```
+
 ## Notas Importantes
 
 - **Projeto de Estudos:** Desenvolvido em parceria com a Recode e Instituto Coca-Cola para demonstrar habilidades técnicas
@@ -443,11 +629,15 @@ Os logs da aplicação são configurados para facilitar debugging e monitorament
 - [ ] Implementação de testes unitários e de integração mais abrangentes
 - [ ] Configuração de banco de dados persistente (MySQL/PostgreSQL)
 - [ ] Adição de autenticação e autorização (Spring Security + JWT)
-- [ ] Implementação de paginação nos relatórios
-- [ ] Cache de resultados para otimização de performance
+- [ ] Implementação de paginação nos relatórios para grandes volumes de dados
+- [ ] Cache de resultados (Redis/Caffeine) para otimização de performance
 - [ ] API de exportação de relatórios em PDF/Excel
-- [ ] Dashboard frontend com gráficos interativos
-- [ ] Deploy em cloud (AWS, Azure, Render, etc.)
+- [ ] Dashboard frontend com gráficos interativos (React/Vue.js)
+- [ ] Deploy em cloud (AWS, Azure, Render, Heroku)
+- [ ] Containerização com Docker e Docker Compose
+- [ ] CI/CD com GitHub Actions ou Jenkins
+- [ ] Monitoramento com Prometheus e Grafana
+- [ ] Tratamento de arquivos CSV maiores com processamento em lote (batch processing)
 
 ## Contato
 
