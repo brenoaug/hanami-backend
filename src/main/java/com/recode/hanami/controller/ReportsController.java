@@ -204,8 +204,8 @@ public class ReportsController {
 
     @Operation(
             summary = "Resumo financeiro das vendas",
-            description = "Retorna um resumo das vendas: " +
-                    "total de vendas, número de transações e média por transação."
+            description = "Retorna um resumo detalhado das vendas com métricas de transações, " +
+                    "formas de pagamento e canais de venda mais e menos utilizados."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -217,10 +217,12 @@ public class ReportsController {
                                     name = "Exemplo de resposta",
                                     value = """
                                             {
-                                              "titulo": "Resumo Financeiro Hanami",
-                                              "total_vendas": 245780.50,
-                                              "numero_transacoes": 356,
-                                              "media_por_transacoes": 690.45
+                                              "numero_total_vendas": 356,
+                                              "valor_medio_por_transacao": 690.45,
+                                              "forma_pagamento_mais_utilizada": "Cartão de Crédito",
+                                              "forma_pagamento_menos_utilizada": "Boleto",
+                                              "canal_vendas_mais_utilizado": "E-commerce",
+                                              "canal_vendas_menos_utilizado": "Telefone"
                                             }
                                             """
                             )
@@ -233,51 +235,23 @@ public class ReportsController {
 
         List<Venda> todasVendas = vendaRepository.findAll();
 
-        Double totalVendas = calculadoraService.calcularTotalVendas(todasVendas);
-        Integer numTransacoes = calculadoraService.calcularNumeroTransacoes(todasVendas);
-        Double mediaTransacao = calculadoraService.calcularMediaPorTransacao(todasVendas);
+        Integer numeroTotalVendas = calculadoraService.calcularNumeroTransacoes(todasVendas);
+        Double valorMedioPorTransacao = calculadoraService.calcularMediaPorTransacao(todasVendas);
+        String formaPagamentoMaisUtilizada = calculadoraService.calcularFormaPagamentoMaisUtilizada(todasVendas);
+        String formaPagamentoMenosUtilizada = calculadoraService.calcularFormaPagamentoMenosUtilizada(todasVendas);
+        String canalVendasMaisUtilizado = calculadoraService.calcularCanalVendasMaisUtilizado(todasVendas);
+        String canalVendasMenosUtilizado = calculadoraService.calcularCanalVendasMenosUtilizado(todasVendas);
 
-        Map<String, Object> dashboard = new LinkedHashMap<>();
-        dashboard.put("titulo", "Resumo Financeiro Hanami");
-        dashboard.put("total_vendas", totalVendas);
-        dashboard.put("numero_transacoes", numTransacoes);
-        dashboard.put("media_por_transacoes", mediaTransacao);
+        Map<String, Object> resumo = new LinkedHashMap<>();
+        resumo.put("numero_total_vendas", numeroTotalVendas);
+        resumo.put("valor_medio_por_transacao", valorMedioPorTransacao);
+        resumo.put("forma_pagamento_mais_utilizada", formaPagamentoMaisUtilizada);
+        resumo.put("forma_pagamento_menos_utilizada", formaPagamentoMenosUtilizada);
+        resumo.put("canal_vendas_mais_utilizado", canalVendasMaisUtilizado);
+        resumo.put("canal_vendas_menos_utilizado", canalVendasMenosUtilizado);
 
-        return ResponseEntity.ok(dashboard);
+        logger.info("Resumo financeiro calculado: {} vendas, média de R$ {}", numeroTotalVendas, valorMedioPorTransacao);
+
+        return ResponseEntity.ok(resumo);
     }
-//    @GetMapping("/produtos")
-//    public ResponseEntity<List<Produto>> listarProdutos(
-//            @RequestParam(name = "sort_by", required = false) String sortBy) {
-//
-//        if (sortBy == null) {
-//            return ResponseEntity.ok(produtoRepository.findAll());
-//        }
-//
-//        String campoParaOrdenar;
-//        Sort.Direction direcao = Sort.Direction.ASC;
-//
-//        switch (sortBy) {
-//            case "quantidade":
-//                campoParaOrdenar = "quantidade";
-//                direcao = Sort.Direction.DESC;
-//                break;
-//            case "preco":
-//                campoParaOrdenar = "precoUnitario";
-//                direcao = Sort.Direction.DESC;
-//                break;
-//            case "nome":
-//                campoParaOrdenar = "nomeProduto";
-//                break;
-//            case "margem":
-//                campoParaOrdenar = "margemLucro";
-//                direcao = Sort.Direction.DESC;
-//                break;
-//            default:
-//                campoParaOrdenar = "nomeProduto";
-//        }
-//
-//        Sort ordenacao = Sort.by(direcao, campoParaOrdenar);
-//
-//        return ResponseEntity.ok(produtoRepository.findAll(ordenacao));
-//    }
 }

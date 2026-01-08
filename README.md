@@ -241,7 +241,7 @@ A API possui documentação interativa gerada automaticamente pelo **SpringDoc O
 #### Reports Controller
 - `GET /hanami/reports/financial-metrics` - Métricas financeiras consolidadas (receita, custos, lucro)
 - `GET /hanami/reports/product-analysis` - Análise agregada por produto (quantidade e receita total)
-- `GET /hanami/reports/sales-summary` - Resumo executivo das vendas
+- `GET /hanami/reports/sales-summary` - Resumo executivo com análise de canais e formas de pagamento
 
 ## Detalhes dos Endpoints da API
 
@@ -336,22 +336,34 @@ GET /hanami/reports/product-analysis?sort_by=total
 ### 4. Resumo de Vendas
 **Endpoint:** `GET /hanami/reports/sales-summary`
 
-**Descrição:** Retorna um dashboard executivo com resumo geral das vendas: total de vendas, número de transações e média por transação.
+**Descrição:** Retorna um resumo executivo das vendas com métricas estratégicas: número total de vendas, valor médio por transação e análise dos canais de venda e formas de pagamento mais e menos utilizados.
 
 **Resposta de Sucesso (200):**
 ```json
 {
-  "titulo": "Resumo Financeiro Hanami",
-  "total_vendas": 102614924.62,
-  "numero_transacoes": 10000,
-  "media_por_transacoes": 10261.49
+  "numero_total_vendas": 10000,
+  "valor_medio_por_transacao": 10261.49,
+  "forma_pagamento_mais_utilizada": "Cartão de Crédito",
+  "forma_pagamento_menos_utilizada": "Boleto",
+  "canal_vendas_mais_utilizado": "E-commerce",
+  "canal_vendas_menos_utilizado": "Telefone"
 }
 ```
 
-**Cálculos:**
-- `total_vendas` = Soma de todos os `valor_final`
-- `numero_transacoes` = Contagem total de registros de vendas
-- `media_por_transacoes` = `total_vendas / numero_transacoes`
+**Métricas Retornadas:**
+- `numero_total_vendas` = Quantidade total de transações realizadas
+- `valor_medio_por_transacao` = Ticket médio de venda (receita total / número de transações)
+- `forma_pagamento_mais_utilizada` = Método de pagamento com maior número de transações
+- `forma_pagamento_menos_utilizada` = Método de pagamento com menor número de transações
+- `canal_vendas_mais_utilizado` = Canal que gerou mais vendas
+- `canal_vendas_menos_utilizado` = Canal que gerou menos vendas
+
+**Insights de Negócio:**
+Este endpoint fornece informações estratégicas para:
+- Entender o ticket médio das vendas
+- Identificar preferências de pagamento dos clientes
+- Descobrir quais canais de venda são mais eficientes
+- Tomar decisões sobre investimento em canais menos utilizados
 
 ---
 
@@ -445,12 +457,19 @@ GET /hanami/reports/product-analysis?sort_by=total
 3. **Resposta esperada:**
    ```json
    {
-     "titulo": "Resumo Financeiro Hanami",
-     "total_vendas": 102614924.62,
-     "numero_transacoes": 10000,
-     "media_por_transacoes": 10261.49
+     "numero_total_vendas": 10000,
+     "valor_medio_por_transacao": 10261.49,
+     "forma_pagamento_mais_utilizada": "Cartão de Crédito",
+     "forma_pagamento_menos_utilizada": "Boleto",
+     "canal_vendas_mais_utilizado": "E-commerce",
+     "canal_vendas_menos_utilizado": "Telefone"
    }
    ```
+   
+   **Análise dos Resultados:**
+   - O endpoint retorna métricas estratégicas sobre as vendas
+   - Identifica padrões de comportamento de compra dos clientes
+   - Mostra quais canais e formas de pagamento precisam de mais atenção
 
 ---
 
@@ -514,63 +533,6 @@ O projeto utiliza o **H2 Database**, um banco de dados em memória ideal para de
    - `PRODUTOS` - Catálogo de produtos
    - `VENDEDORES` - Dados dos vendedores
 
-### Consultas SQL Úteis:
-
-```sql
--- Ver todas as vendas (limitado a 10 para melhor visualização)
-SELECT * FROM VENDAS LIMIT 10;
-
--- Ver todos os clientes únicos
-SELECT * FROM CLIENTES LIMIT 10;
-
--- Ver todos os produtos únicos
-SELECT * FROM PRODUTOS LIMIT 10;
-
--- Análise agregada de vendas por produto (igual ao endpoint /product-analysis)
-SELECT 
-    p.NOME_PRODUTO, 
-    SUM(v.QUANTIDADE) as QUANTIDADE_VENDIDA, 
-    SUM(v.VALOR_FINAL) as TOTAL_ARRECADADO
-FROM VENDAS v
-JOIN PRODUTOS p ON v.PRODUTO_ID = p.PRODUTO_ID
-GROUP BY p.NOME_PRODUTO
-ORDER BY TOTAL_ARRECADADO DESC;
-
--- Métricas financeiras (igual ao endpoint /financial-metrics)
-SELECT 
-    SUM(v.VALOR_FINAL) as RECEITA_LIQUIDA,
-    COUNT(*) as NUMERO_TRANSACOES,
-    AVG(v.VALOR_FINAL) as MEDIA_POR_TRANSACAO
-FROM VENDAS v;
-
--- Top 5 produtos mais vendidos por quantidade
-SELECT 
-    p.NOME_PRODUTO, 
-    SUM(v.QUANTIDADE) as TOTAL_QUANTIDADE
-FROM VENDAS v
-JOIN PRODUTOS p ON v.PRODUTO_ID = p.PRODUTO_ID
-GROUP BY p.NOME_PRODUTO
-ORDER BY TOTAL_QUANTIDADE DESC
-LIMIT 5;
-
--- Top 5 produtos mais lucrativos
-SELECT 
-    p.NOME_PRODUTO, 
-    SUM(v.VALOR_FINAL) as RECEITA_TOTAL
-FROM VENDAS v
-JOIN PRODUTOS p ON v.PRODUTO_ID = p.PRODUTO_ID
-GROUP BY p.NOME_PRODUTO
-ORDER BY RECEITA_TOTAL DESC
-LIMIT 5;
-```
-
-### Importante sobre o H2:
-
-- **Banco de dados volátil:** Todos os dados são perdidos quando a aplicação é reiniciada
-- **Ideal para desenvolvimento:** Não requer instalação de banco de dados externo
-- **Para produção:** Substitua por MySQL, PostgreSQL ou outro banco persistente
-
-
 ## Estrutura de Logs
 
 Os logs da aplicação são configurados para facilitar debugging e monitoramento:
@@ -595,43 +557,6 @@ Os logs da aplicação são configurados para facilitar debugging e monitorament
 2026-01-05 14:30:25 [main] INFO  c.r.h.ApiVendasApplication - Starting ApiVendasApplication
 2026-01-05 14:30:26 [http-nio-8080-exec-1] DEBUG c.r.h.c.CsvController - Arquivo convertido com sucesso
 ```
-
-## Executando Testes
-
-O projeto inclui testes automatizados:
-
-```bash
-mvn test
-```
-
-Para executar com relatório de cobertura:
-
-```bash
-mvn clean test jacoco:report
-```
-
-## Notas Importantes
-
-- **Projeto de Estudos:** Desenvolvido em parceria com a Recode e Instituto Coca-Cola para demonstrar habilidades técnicas
-- **Banco em Memória:** O H2 é volátil - dados são perdidos ao reiniciar
-- **Pronto para Produção:** Com ajustes mínimos pode ser adaptado para ambientes reais
-- **Código Documentado:** Comentários e estrutura pensados para fácil compreensão
-- **Boas Práticas:** Segue convenções do Spring Boot e padrões de mercado
-
-## Possíveis Melhorias Futuras
-
-- [ ] Implementação de testes unitários e de integração mais abrangentes
-- [ ] Configuração de banco de dados persistente (MySQL/PostgreSQL)
-- [ ] Adição de autenticação e autorização (Spring Security + JWT)
-- [ ] Implementação de paginação nos relatórios para grandes volumes de dados
-- [ ] Cache de resultados (Redis/Caffeine) para otimização de performance
-- [ ] API de exportação de relatórios em PDF/Excel
-- [ ] Dashboard frontend com gráficos interativos (React/Vue.js)
-- [ ] Deploy em cloud (AWS, Azure, Render, Heroku)
-- [ ] Containerização com Docker e Docker Compose
-- [ ] CI/CD com GitHub Actions ou Jenkins
-- [ ] Monitoramento com Prometheus e Grafana
-- [ ] Tratamento de arquivos CSV maiores com processamento em lote (batch processing)
 
 ## Contato
 

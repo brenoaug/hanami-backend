@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class CalculadoraMetricasService {
@@ -108,5 +110,73 @@ public class CalculadoraMetricasService {
                 .sum();
 
         return arredondar(receitaTotal - custoTotal);
+    }
+
+    public String calcularFormaPagamentoMaisUtilizada(List<Venda> vendas) {
+        if (vendas == null || vendas.isEmpty()) {
+            return "N/A";
+        }
+
+        Map<String, Long> contagemFormasPagamento = vendas.stream()
+                .collect(Collectors.groupingBy(
+                        v -> v.getFormaPagamento() != null ? v.getFormaPagamento() : "Não informado",
+                        Collectors.counting()
+                ));
+
+        return contagemFormasPagamento.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse("N/A");
+    }
+
+    public String calcularFormaPagamentoMenosUtilizada(List<Venda> vendas) {
+        if (vendas == null || vendas.isEmpty()) {
+            return "N/A";
+        }
+
+        Map<String, Long> contagemFormasPagamento = vendas.stream()
+                .collect(Collectors.groupingBy(
+                        v -> v.getFormaPagamento() != null ? v.getFormaPagamento() : "Não informado",
+                        Collectors.counting()
+                ));
+
+        return contagemFormasPagamento.entrySet().stream()
+                .min(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse("N/A");
+    }
+
+    public String calcularCanalVendasMaisUtilizado(List<Venda> vendas) {
+        if (vendas == null || vendas.isEmpty()) {
+            return "N/A";
+        }
+
+        Map<String, Long> contagemCanais = vendas.stream()
+                .collect(Collectors.groupingBy(
+                        v -> v.getCanalVenda() != null ? v.getCanalVenda() : "Não informado",
+                        Collectors.counting()
+                ));
+
+        return contagemCanais.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse("N/A");
+    }
+
+    public String calcularCanalVendasMenosUtilizado(List<Venda> vendas) {
+        if (vendas == null || vendas.isEmpty()) {
+            return "N/A";
+        }
+
+        Map<String, Long> contagemCanais = vendas.stream()
+                .collect(Collectors.groupingBy(
+                        v -> v.getCanalVenda() != null ? v.getCanalVenda() : "Não informado",
+                        Collectors.counting()
+                ));
+
+        return contagemCanais.entrySet().stream()
+                .min(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse("N/A");
     }
 }
