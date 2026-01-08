@@ -16,26 +16,14 @@ Empresas e profissionais frequentemente precisam analisar grandes volumes de dad
 
 ## Funcionalidades Principais
 
-### Upload e Processamento de CSV
-- Recebe arquivos CSV contendo dados de vendas, clientes, produtos e vendedores
-- Valida automaticamente a estrutura e integridade dos dados
-- Converte e persiste as informações no banco de dados H2
-
-### Cálculos Financeiros Automatizados
-- **Receita Líquida:** Cálculo do faturamento total das vendas
-- **Custo Total:** Estimativa dos custos baseada em margens de lucro
-- **Lucro Bruto:** Diferença entre receita e custos
-- **Margens de Lucro:** Cálculo percentual de rentabilidade
-
-### Relatórios Analíticos
-- Análise detalhada por produto com múltiplos critérios de ordenação
-- Métricas financeiras consolidadas
-- Exportação de dados estruturados em JSON
-
-### Validação e Tratamento de Erros
-- Validação de layout de arquivo
-- Tratamento de dados inconsistentes
-- Mensagens de erro descritivas e personalizadas
+- Upload de arquivos CSV de vendas, clientes, produtos e vendedores
+- Validação automática da estrutura e dos dados do arquivo
+- Persistência dos dados no banco H2 em memória
+- Cálculo automático de receita líquida, custo total e lucro bruto
+- Relatórios de vendas agregados por produto (quantidade e total arrecadado)
+- Resumo executivo das vendas (número total, ticket médio, canais e formas de pagamento mais/menos usados)
+- Documentação automática dos endpoints via Swagger
+- Logs detalhados de operações e erros
 
 ## Organização de Pastas e Tecnologias Utilizadas
 
