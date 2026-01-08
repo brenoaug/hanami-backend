@@ -14,32 +14,7 @@ O nome "Hanami" (花見) significa "observar as flores" em japonês, representan
 
 Empresas e profissionais frequentemente precisam analisar grandes volumes de dados de vendas armazenados em planilhas CSV. O processo manual de importação, validação e cálculo de métricas é trabalhoso, propenso a erros e demorado.
 
-## Funcionalidades Principais
-
-### Upload e Processamento de CSV
-- Recebe arquivos CSV contendo dados de vendas, clientes, produtos e vendedores
-- Valida automaticamente a estrutura e integridade dos dados
-- Converte e persiste as informações no banco de dados H2
-
-### Cálculos Financeiros Automatizados
-- **Receita Líquida:** Cálculo do faturamento total das vendas
-- **Custo Total:** Estimativa dos custos baseada em margens de lucro
-- **Lucro Bruto:** Diferença entre receita e custos
-- **Margens de Lucro:** Cálculo percentual de rentabilidade
-
-### Relatórios Analíticos
-- Análise detalhada por produto com múltiplos critérios de ordenação
-- Métricas financeiras consolidadas
-- Exportação de dados estruturados em JSON
-
-### Validação e Tratamento de Erros
-- Validação de layout de arquivo
-- Tratamento de dados inconsistentes
-- Mensagens de erro descritivas e personalizadas
-
 ## Arquitetura e Tecnologias Utilizadas
-
-A aplicação foi desenvolvida seguindo os princípios de **Clean Architecture** e **SOLID**, organizada em camadas bem definidas:
 
 ### Backend (API RESTful)
 
@@ -50,8 +25,6 @@ A aplicação foi desenvolvida seguindo os princípios de **Clean Architecture**
 * **Persistência:** Spring Data JPA / Hibernate
 * **Processamento CSV:** Jackson Dataformat CSV
 * **Documentação:** SpringDoc OpenAPI (Swagger)
-* **Validação:** Spring Validation
-* **Logging:** SLF4J / Logback
 
 ### Arquitetura em Camadas
 
@@ -259,7 +232,7 @@ A API possui documentação interativa gerada automaticamente pelo **SpringDoc O
 ```json
 {
   "status": "sucesso",
-  "registrosProcessados": 10000
+  "linha_processadas": 10000
 }
 ```
 
