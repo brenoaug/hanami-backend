@@ -239,9 +239,9 @@ A API possui documentação interativa gerada automaticamente pelo **SpringDoc O
 - `POST /hanami/upload-file` - Upload de arquivo CSV
 
 #### Reports Controller
-- `GET /hanami/reports/financial-metrics` - Métricas financeiras consolidadas (receita, custos, lucro)
-- `GET /hanami/reports/product-analysis` - Análise agregada por produto (quantidade e receita total)
-- `GET /hanami/reports/sales-summary` - Resumo executivo com análise de canais e formas de pagamento
+- `GET /hanami/reports/financial-metrics` - Retorna receita líquida, custo total e lucro bruto.
+- `GET /hanami/reports/product-analysis` - Retorna lista de produtos com quantidade vendida e total arrecadado.
+- `GET /hanami/reports/sales-summary` - Retorna resumo com número de vendas, ticket médio, formas de pagamento e canais mais/menos usados.
 
 ## Detalhes dos Endpoints da API
 
