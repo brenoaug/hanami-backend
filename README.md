@@ -65,7 +65,7 @@ com.recode.hanami
 ```
 
 Principais tecnologias utilizadas:
-- **Java 22**
+- **Java 21**
 - **Spring Boot 3.4.4**
 - **Maven**
 - **H2 Database (memória)**
