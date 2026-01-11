@@ -1,6 +1,6 @@
 # Hanami - API de Análise de Vendas
 
-![Java](https://img.shields.io/badge/Java-22-orange?logo=java)
+![Java](https://img.shields.io/badge/Java-21-orange?logo=java)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.4-green?logo=springboot)
 ![Maven](https://img.shields.io/badge/Maven-3.8+-blue?logo=apachemaven)
 
