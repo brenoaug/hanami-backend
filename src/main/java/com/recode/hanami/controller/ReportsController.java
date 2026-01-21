@@ -1,8 +1,11 @@
 package com.recode.hanami.controller;
 
+import com.recode.hanami.dto.DistribuicaoClientesDTO;
+import com.recode.hanami.dto.MetricasRegiaoDTO;
 import com.recode.hanami.entities.Venda;
 import com.recode.hanami.repository.VendaRepository;
 import com.recode.hanami.service.CalculadoraMetricasService;
+import com.recode.hanami.service.CalculosDemografiaRegiao;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -29,11 +32,14 @@ public class ReportsController {
 
     private final VendaRepository vendaRepository;
     private final CalculadoraMetricasService calculadoraService;
+    private final CalculosDemografiaRegiao calculosDemografiaRegiao;
 
     public ReportsController(VendaRepository vendaRepository,
-                             CalculadoraMetricasService calculadoraService) {
+                             CalculadoraMetricasService calculadoraService,
+                             CalculosDemografiaRegiao calculosDemografiaRegiao) {
         this.vendaRepository = vendaRepository;
         this.calculadoraService = calculadoraService;
+        this.calculosDemografiaRegiao = calculosDemografiaRegiao;
     }
 
     @Operation(
@@ -144,11 +150,14 @@ public class ReportsController {
     @GetMapping("/product-analysis")
     public ResponseEntity<List<Map<String, Object>>> analisarLucros(
             @Parameter(
-                    description = "Critério de ordenação dos resultados. **Opções disponíveis:**\n\n" +
-                            "- `nome` (padrão) - Ordena por nome do produto (alfabético)\n" +
-                            "- `quantidade` - Ordena por quantidade vendida (maior para menor)\n" +
-                            "- `total` - Ordena por total arrecadado (maior para menor)\n\n" +
-                            "**Exemplo de uso:** `/hanami/reports/product-analysis?sort_by=total`",
+                    description = """
+                            Critério de ordenação dos resultados. **Opções disponíveis:**
+                            
+                            - `nome` (padrão) - Ordena por nome do produto (alfabético)
+                            - `quantidade` - Ordena por quantidade vendida (maior para menor)
+                            - `total` - Ordena por total arrecadado (maior para menor)
+                            
+                            **Exemplo de uso:** `/hanami/reports/product-analysis?sort_by=total`""",
                     example = "total"
             )
             @RequestParam(value = "sort_by", required = false, defaultValue = "nome") String sortBy
@@ -254,4 +263,190 @@ public class ReportsController {
 
         return ResponseEntity.ok(resumo);
     }
+
+    @Operation(
+            summary = "Desempenho por região",
+            description = "Retorna métricas de vendas agrupadas por região geográfica. " +
+                    "Para cada região, são calculados: total de transações, receita total, " +
+                    "quantidade de produtos vendidos e valor médio por transação."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Métricas por região calculadas com sucesso",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "Exemplo de resposta",
+                                    description = "Desempenho consolidado por região",
+                                    value = """
+                                            {
+                                              "Sudeste": {
+                                                "totalTransacoes": 4523,
+                                                "receitaTotal": 1250300.50,
+                                                "quantidadeVendida": 8900,
+                                                "mediaValorTransacao": 276.42
+                                              },
+                                              "Sul": {
+                                                "totalTransacoes": 2156,
+                                                "receitaTotal": 680200.00,
+                                                "quantidadeVendida": 4350,
+                                                "mediaValorTransacao": 315.52
+                                              },
+                                              "Nordeste": {
+                                                "totalTransacoes": 1890,
+                                                "receitaTotal": 450780.25,
+                                                "quantidadeVendida": 3200,
+                                                "mediaValorTransacao": 238.50
+                                              },
+                                              "Norte": {
+                                                "totalTransacoes": 980,
+                                                "receitaTotal": 245600.75,
+                                                "quantidadeVendida": 1650,
+                                                "mediaValorTransacao": 250.61
+                                              },
+                                              "Centro-Oeste": {
+                                                "totalTransacoes": 751,
+                                                "receitaTotal": 198450.00,
+                                                "quantidadeVendida": 1200,
+                                                "mediaValorTransacao": 264.25
+                                              }
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Sem dados disponíveis",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "Resposta vazia",
+                                    description = "Quando não há transações com região definida",
+                                    value = "{}"
+                            )
+                    )
+            )
+    })
+    @GetMapping("/regional-performance")
+    public ResponseEntity<Map<String, MetricasRegiaoDTO>> getRegionalPerformance() {
+        logger.debug("Iniciando cálculo de desempenho por região");
+
+        List<Venda> todasVendas = vendaRepository.findAll();
+        Map<String, MetricasRegiaoDTO> metricasPorRegiao =
+                calculosDemografiaRegiao.calcularMetricasPorRegiao(todasVendas);
+
+        logger.info("Desempenho por região calculado: {} regiões encontradas", metricasPorRegiao.size());
+
+        return ResponseEntity.ok(metricasPorRegiao);
+    }
+
+    @Operation(
+            summary = "Perfil demográfico dos clientes",
+            description = "Retorna a distribuição dos clientes por gênero, faixa etária e cidade. " +
+                    "Para cada categoria, são apresentadas a contagem e o percentual do total."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Perfil demográfico calculado com sucesso",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "Exemplo de resposta",
+                                    description = "Distribuições demográficas consolidadas",
+                                    value = """
+                                            {
+                                              "por_genero": {
+                                                "M": {
+                                                  "contagem": 5230,
+                                                  "percentual": 52.30
+                                                },
+                                                "F": {
+                                                  "contagem": 4770,
+                                                  "percentual": 47.70
+                                                }
+                                              },
+                                              "por_faixa_etaria": {
+                                                "26-35": {
+                                                  "contagem": 3200,
+                                                  "percentual": 32.00
+                                                },
+                                                "36-45": {
+                                                  "contagem": 2800,
+                                                  "percentual": 28.00
+                                                },
+                                                "18-25": {
+                                                  "contagem": 2100,
+                                                  "percentual": 21.00
+                                                },
+                                                "46-55": {
+                                                  "contagem": 1200,
+                                                  "percentual": 12.00
+                                                },
+                                                "56-65": {
+                                                  "contagem": 500,
+                                                  "percentual": 5.00
+                                                },
+                                                "Acima de 65": {
+                                                  "contagem": 200,
+                                                  "percentual": 2.00
+                                                }
+                                              },
+                                              "por_cidade": {
+                                                "São Paulo": {
+                                                  "contagem": 2500,
+                                                  "percentual": 25.00
+                                                },
+                                                "Rio de Janeiro": {
+                                                  "contagem": 1800,
+                                                  "percentual": 18.00
+                                                },
+                                                "Belo Horizonte": {
+                                                  "contagem": 1200,
+                                                  "percentual": 12.00
+                                                },
+                                                "Brasília": {
+                                                  "contagem": 950,
+                                                  "percentual": 9.50
+                                                }
+                                              }
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Sem dados disponíveis",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "Resposta vazia",
+                                    description = "Quando não há clientes cadastrados",
+                                    value = """
+                                            {
+                                              "por_genero": {},
+                                              "por_faixa_etaria": {},
+                                              "por_cidade": {}
+                                            }
+                                            """
+                            )
+                    )
+            )
+    })
+    @GetMapping("/customer-profile")
+    public ResponseEntity<DistribuicaoClientesDTO> getCustomerProfile() {
+        logger.debug("Iniciando cálculo de perfil demográfico dos clientes");
+
+        List<Venda> todasVendas = vendaRepository.findAll();
+        DistribuicaoClientesDTO distribuicao =
+                calculosDemografiaRegiao.calcularDistribuicaoClientes(todasVendas);
+
+        logger.info("Perfil demográfico calculado com sucesso");
+
+        return ResponseEntity.ok(distribuicao);
+    }
 }
+

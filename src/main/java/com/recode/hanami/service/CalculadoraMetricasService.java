@@ -13,13 +13,6 @@ import java.util.stream.Collectors;
 @Service
 public class CalculadoraMetricasService {
 
-    public Double calcularReceitaLiquida(Venda venda) {
-        if (venda.getValorFinal() == null) {
-            return 0.0;
-        }
-        return venda.getValorFinal();
-    }
-
     public Double calcularCustoTotalVenda(Venda venda) {
         Produto produto = venda.getProduto();
 
@@ -36,16 +29,6 @@ public class CalculadoraMetricasService {
         double custoUnitarioEstimado = precoUnitario / (1 + margem);
 
         return custoUnitarioEstimado * quantidade;
-    }
-
-    public Double calcularLucroBruto(Venda venda) {
-        double receita = calcularReceitaLiquida(venda);
-        double custo = calcularCustoTotalVenda(venda);
-
-        double lucro = receita - custo;
-
-
-        return arredondar(lucro);
     }
 
     public Double calcularTotalVendas(List<Venda> vendas) {
@@ -99,8 +82,6 @@ public class CalculadoraMetricasService {
     public Double calcularLucroBrutoGeral(List<Venda> vendas) {
         if (vendas == null || vendas.isEmpty()) return 0.0;
 
-        // Calcula o lucro como: Receita Total - Custo Total
-        // Isso evita acúmulo de erros de arredondamento
         double receitaTotal = vendas.stream()
                 .mapToDouble(v -> v.getValorFinal() != null ? v.getValorFinal() : 0.0)
                 .sum();

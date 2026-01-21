@@ -100,35 +100,35 @@ public class ProcessamentoVendasService {
     }
 
     private Venda converterParaVenda(DadosArquivoDTO dto, Cliente cliente, Produto produto, Vendedor vendedor) {
-        Venda v = new Venda();
+        Venda venda = new Venda();
 
         if (dto.idTransacao() == null || dto.idTransacao().trim().isEmpty()) {
             throw new DadosInvalidosException("ID da transação não pode ser nulo ou vazio");
         }
 
-        v.setId(dto.idTransacao());
-        v.setDataVenda(dto.dataVenda());
+        venda.setId(dto.idTransacao());
+        venda.setDataVenda(dto.dataVenda());
 
-        v.setValorFinal(dto.valorFinal());
-        v.setSubtotal(dto.subtotal());
+        venda.setValorFinal(dto.valorFinal());
+        venda.setSubtotal(dto.subtotal());
 
-        v.setDescontoPercent(dto.descontoPercent());
-        v.setQuantidade(dto.quantidade());
-        v.setCanalVenda(dto.canalVenda());
-        v.setFormaPagamento(dto.formaPagamento());
+        venda.setDescontoPercent(dto.descontoPercent());
+        venda.setQuantidade(dto.quantidade());
+        venda.setCanalVenda(dto.canalVenda());
+        venda.setFormaPagamento(dto.formaPagamento());
 
-        v.setRegiao(dto.regiao());
-        v.setStatusEntrega(dto.statusEntrega());
-        v.setTempoEntregaDias(dto.tempoEntregaDias());
+        venda.setRegiao(dto.regiao());
+        venda.setStatusEntrega(dto.statusEntrega());
+        venda.setTempoEntregaDias(dto.tempoEntregaDias());
 
         if (cliente == null || produto == null || vendedor == null) {
             throw new IllegalArgumentException("Cliente, Produto e Vendedor não podem ser nulos");
         }
 
-        v.setCliente(cliente);
-        v.setProduto(produto);
-        v.setVendedor(vendedor);
+        venda.setCliente(cliente);
+        venda.setProduto(produto);
+        venda.setVendedor(vendedor);
 
-        return v;
+        return venda;
     }
 }
