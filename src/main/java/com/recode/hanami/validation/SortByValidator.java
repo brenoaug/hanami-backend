@@ -13,7 +13,7 @@ public class SortByValidator {
 
     public boolean isValid(String sortBy) {
         if (sortBy == null || sortBy.isBlank()) {
-            return true; // null/blank é válido pois usa o padrão
+            return true;
         }
         return VALID_SORT_OPTIONS.contains(sortBy.toLowerCase());
     }

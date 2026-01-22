@@ -35,10 +35,6 @@ public class RelatorioService {
         this.objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
     }
 
-    /**
-     * Gera JSON do relatório em formato de bytes.
-     * Converte exceções de serialização para RuntimeException.
-     */
     public byte[] gerarRelatorioJsonBytes(RelatorioCompletoDTO relatorio) {
         try {
             logger.debug("Serializando relatório para JSON");
@@ -49,9 +45,6 @@ public class RelatorioService {
         }
     }
 
-    /**
-     * Gera PDF do relatório (converte exceções checked para RuntimeException).
-     */
     public byte[] gerarRelatorioPdfBytes(RelatorioCompletoDTO relatorio) {
         try {
             logger.debug("Gerando relatório PDF");
@@ -68,30 +61,24 @@ public class RelatorioService {
         List<Venda> todasVendas = vendaRepository.findAll();
         List<Venda> vendasComRelacoes = vendaRepository.findAllWithRelations();
 
-        // Métricas Financeiras
-        MetricasFinanceirasDTO metricasFinanceiras = gerarMetricasFinanceiras(todasVendas);
 
-        // Análise de Produtos
         List<AnaliseProdutoDTO> analiseProdutos = gerarAnaliseProdutos(vendasComRelacoes);
 
-        // Resumo de Vendas
+
         ResumoVendasDTO resumoVendas = gerarResumoVendas(todasVendas);
 
-        // Desempenho Regional
+
         Map<String, MetricasRegiaoDTO> desempenhoRegional = calculosDemografiaRegiao.calcularMetricasPorRegiao(todasVendas);
 
         return new RelatorioCompletoDTO(
                 LocalDateTime.now(),
-                metricasFinanceiras,
+                gerarMetricasFinanceiras(todasVendas),
                 analiseProdutos,
                 resumoVendas,
                 desempenhoRegional
         );
     }
 
-    /**
-     * Gera métricas financeiras consolidadas.
-     */
     public Map<String, Double> gerarMetricasFinanceirasMap() {
         logger.debug("Gerando métricas financeiras");
         List<Venda> vendas = vendaRepository.findAll();
@@ -108,9 +95,6 @@ public class RelatorioService {
         return metrics;
     }
 
-    /**
-     * Gera análise agregada de produtos com ordenação aplicada.
-     */
     public List<Map<String, Object>> gerarAnaliseProdutosOrdenada(String sortBy) {
         logger.debug("Gerando análise de produtos ordenada por: {}", sortBy);
         List<Venda> vendasComRelacoes = vendaRepository.findAllWithRelations();
@@ -145,9 +129,6 @@ public class RelatorioService {
         return relatorio;
     }
 
-    /**
-     * Gera resumo completo de vendas.
-     */
     public Map<String, Object> gerarResumoVendasMap() {
         logger.debug("Gerando resumo de vendas");
         List<Venda> vendas = vendaRepository.findAll();
@@ -219,7 +200,6 @@ public class RelatorioService {
             }
         }
 
-        // Converter para lista de DTOs e ordenar por total arrecadado (maior para menor)
         return produtosMap.values().stream()
                 .map(map -> new AnaliseProdutoDTO(
                         (String) map.get("nome_produto"),
