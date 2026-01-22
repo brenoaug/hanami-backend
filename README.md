@@ -1,7 +1,7 @@
 # Hanami - API de Análise de Vendas
 
 ![Java](https://img.shields.io/badge/Java-21-orange?logo=java)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.4-green?logo=springboot)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.9-green?logo=springboot)
 ![Maven](https://img.shields.io/badge/Maven-3.8+-blue?logo=apachemaven)
 
 ## Sobre o Projeto
@@ -34,31 +34,17 @@ A aplicação está organizada em pastas que refletem as responsabilidades de ca
 
 ```
 com.recode.hanami
+├── config/              # Configurações da aplicação (ex: OpenAPI/Swagger)
+│   └── OpenApiConfig.java
+│
 ├── controller/          # Camada de apresentação (REST Controllers)
+│   ├── docs/                       # Interfaces de documentação (OpenAPI)
+│   │   ├── CsvControllerOpenApi.java
+│   │   └── ReportsControllerOpenApi.java
 │   ├── CsvController.java        # Upload de arquivos CSV
 │   └── ReportsController.java    # Geração de relatórios
 │
-├── service/             # Camada de lógica de negócio
-│   ├── CsvService.java                     # Conversão CSV → JSON
-│   ├── ProcessamentoVendasService.java     # Processamento e persistência
-│   ├── CalculadoraMetricasService.java     # Cálculos financeiros
-│   ├── CalculosDemografiaRegiao.java       # Métricas regionais e demográficas
-│   ├── RelatorioService.java               # Geração de relatórios completos
-│   └── PdfService.java                     # Geração de PDFs com gráficos
-│
-├── repository/         # Camada de acesso a dados (JPA)
-│   ├── VendaRepository.java
-│   ├── ClienteRepository.java
-│   ├── ProdutoRepository.java
-│   └── VendedorRepository.java
-│
-├── entities/            # Entidades JPA (modelo de dados)
-│   ├── Venda.java
-│   ├── Cliente.java
-│   ├── Produto.java
-│   └── Vendedor.java
-│
-├── dto/                 # Data Transfer Objects
+├── dto/                 # Data Transfer Objects (DTOs)
 │   ├── DadosArquivoDTO.java
 │   ├── ImportacaoResponseDTO.java
 │   ├── MetricasFinanceirasDTO.java
@@ -69,17 +55,46 @@ com.recode.hanami
 │   ├── DistribuicaoClientesDTO.java
 │   └── ItemDistribuicaoDTO.java
 │
-├── exceptions/          # Exceções personalizadas
+├── entities/            # Entidades JPA (modelo de dados)
+│   ├── Venda.java
+│   ├── Cliente.java
+│   ├── Produto.java
+│   └── Vendedor.java
+│
+├── exception/          # Exceções e tratamento de erros
+│   ├── handler/                    # Global Exception Handler
+│   │   ├── ErrorType.java
+│   │   └── GlobalExceptionHandler.java
 │   ├── ArquivoInvalidoException.java
 │   └── DadosInvalidosException.java
 │
-└── util/               # Classes utilitárias
-    └── TratamentoDadosUtil.java
+├── repository/         # Camada de acesso a dados (JPA Repositories)
+│   ├── VendaRepository.java
+│   ├── ClienteRepository.java
+│   ├── ProdutoRepository.java
+│   └── VendedorRepository.java
+│
+├── service/             # Camada de lógica de negócio
+│   ├── CsvService.java                     # Conversão CSV → JSON
+│   ├── ProcessamentoVendasService.java     # Processamento e persistência
+│   ├── CalculadoraMetricasService.java     # Cálculos financeiros
+│   ├── CalculosDemografiaRegiao.java       # Métricas regionais e demográficas
+│   ├── RelatorioService.java               # Geração de relatórios completos
+│   └── PdfService.java                     # Geração de PDFs com gráficos
+│
+├── util/               # Classes utilitárias
+│   ├── DownloadArquivoUtil.java
+│   └── TratamentoDadosUtil.java
+│
+└── validation/         # Validadores customizados
+    ├── FormatoRelatorioValidator.java
+    ├── SortByValidator.java
+    └── UploadArquivoValidator.java
 ```
 
 Principais tecnologias utilizadas:
 - **Java 21**
-- **Spring Boot 3.4.4**
+- **Spring Boot 3.5.9**
 - **Maven**
 - **H2 Database (memória)**
 - **Spring Data JPA / Hibernate**
@@ -93,7 +108,7 @@ Principais tecnologias utilizadas:
 
 Antes de começar, certifique-se de ter instalado:
 
-* **Java 22 (JDK)** - [Download aqui](https://www.oracle.com/java/technologies/downloads/)
+* **Java 21 (JDK)** - [Download aqui](https://www.oracle.com/java/technologies/downloads/)
 * **Maven 3.8+** - [Download aqui](https://maven.apache.org/download.cgi)
 * **IDE de sua preferência:**
   * IntelliJ IDEA (recomendado) - [Download aqui](https://www.jetbrains.com/idea/download/)
@@ -105,7 +120,7 @@ Antes de começar, certifique-se de ter instalado:
 ### Verificar Instalação:
 
 ```bash
-java -version    # Deve retornar Java 22
+java -version    # Deve retornar Java 21
 mvn -version     # Deve retornar Maven 3.8 ou superior
 ```
 
@@ -164,7 +179,7 @@ A aplicação estará disponível em: **`http://localhost:8080`**
    
 2. **Configure o JDK:**
    - `File` → `Project Structure` → `Project`
-   - Defina o **SDK** como **Java 22**
+   - Defina o **SDK** como **Java 21**
    
 3. **Aguarde a importação do Maven:**
    - O IntelliJ irá detectar automaticamente o `pom.xml`
@@ -192,8 +207,8 @@ A aplicação estará disponível em: **`http://localhost:8080`**
 2. **Configure o JDK:**
    - Clique com o botão direito no projeto → `Properties`
    - Vá em `Java Build Path` → `Libraries`
-   - Certifique-se de que o JRE System Library está configurado para **Java 22**
-   
+   - Certifique-se de que o JRE System Library está configurado para **Java 21**
+
 3. **Atualize as dependências Maven:**
    - Clique com o botão direito no projeto
    - Selecione `Maven` → `Update Project`
@@ -499,13 +514,6 @@ O PDF contém:
 - **Tabela de Análise de Produtos** (top 10 produtos)
 - **Tabela de Resumo de Vendas**
 - **Tabela de Desempenho Regional Detalhado**
-
-**Resposta de Erro (400):**
-```json
-{
-  "erro": "Formato inválido. Use 'json' ou 'pdf'."
-}
-```
 
 **Características do PDF:**
 - Design profissional com cabeçalhos coloridos
