@@ -1,11 +1,17 @@
 package com.recode.hanami.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.lowagie.text.DocumentException;
 import com.recode.hanami.dto.DistribuicaoClientesDTO;
 import com.recode.hanami.dto.MetricasRegiaoDTO;
+import com.recode.hanami.dto.RelatorioCompletoDTO;
 import com.recode.hanami.entities.Venda;
 import com.recode.hanami.repository.VendaRepository;
 import com.recode.hanami.service.CalculadoraMetricasService;
 import com.recode.hanami.service.CalculosDemografiaRegiao;
+import com.recode.hanami.service.PdfService;
+import com.recode.hanami.service.RelatorioService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -15,12 +21,16 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
 import java.util.*;
 
 @RestController
@@ -33,13 +43,19 @@ public class ReportsController {
     private final VendaRepository vendaRepository;
     private final CalculadoraMetricasService calculadoraService;
     private final CalculosDemografiaRegiao calculosDemografiaRegiao;
+    private final RelatorioService relatorioService;
+    private final PdfService pdfService;
 
     public ReportsController(VendaRepository vendaRepository,
                              CalculadoraMetricasService calculadoraService,
-                             CalculosDemografiaRegiao calculosDemografiaRegiao) {
+                             CalculosDemografiaRegiao calculosDemografiaRegiao,
+                             RelatorioService relatorioService,
+                             PdfService pdfService) {
         this.vendaRepository = vendaRepository;
         this.calculadoraService = calculadoraService;
         this.calculosDemografiaRegiao = calculosDemografiaRegiao;
+        this.relatorioService = relatorioService;
+        this.pdfService = pdfService;
     }
 
     @Operation(
@@ -447,6 +463,180 @@ public class ReportsController {
         logger.info("Perfil demográfico calculado com sucesso");
 
         return ResponseEntity.ok(distribuicao);
+    }
+
+    @Operation(
+            summary = "Download de relatório completo",
+            description = """
+                    Faz o download de um relatório completo de análise de vendas nos formatos JSON ou PDF.
+                    
+                    **Formatos disponíveis:**
+                    - `json` - Relatório em formato JSON para download
+                    - `pdf` - Relatório em formato PDF com tabelas e gráficos
+                    
+                    O relatório inclui:
+                    - Métricas financeiras (receita, custos, lucro)
+                    - Análise detalhada de produtos
+                    - Resumo de vendas e canais
+                    - Desempenho regional
+                    - Gráficos de vendas por região (apenas PDF)
+                    """
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Relatório gerado com sucesso",
+                    content = {
+                            @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(
+                                            name = "Formato JSON",
+                                            description = "Exemplo de estrutura do relatório JSON",
+                                            value = """
+                                                    {
+                                                      "data_geracao": "2026-01-22T10:30:00",
+                                                      "metricas_financeiras": {
+                                                        "receita_liquida": 458900.75,
+                                                        "custo_total": 321230.50,
+                                                        "lucro_bruto": 137670.25
+                                                      },
+                                                      "analise_produtos": [
+                                                        {
+                                                          "nome_produto": "Notebook Dell",
+                                                          "quantidade_vendida": 125,
+                                                          "total_arrecadado": 400000.00
+                                                        }
+                                                      ],
+                                                      "resumo_vendas": {
+                                                        "numero_total_vendas": 356,
+                                                        "valor_medio_por_transacao": 690.45
+                                                      },
+                                                      "desempenho_regional": {
+                                                        "Sudeste": {
+                                                          "totalTransacoes": 4523,
+                                                          "receitaTotal": 1250300.50
+                                                        }
+                                                      }
+                                                    }
+                                                    """
+                                    )
+                            ),
+                            @Content(
+                                    mediaType = "application/pdf",
+                                    examples = @ExampleObject(
+                                            name = "Formato PDF",
+                                            description = "Arquivo PDF com tabelas formatadas e gráfico de barras"
+                                    )
+                            )
+                    }
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Formato inválido",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "Erro de formato",
+                                    value = """
+                                            {
+                                              "erro": "Formato inválido. Use 'json' ou 'pdf'."
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Erro ao gerar relatório",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "Erro interno",
+                                    value = """
+                                            {
+                                              "erro": "Erro ao gerar relatório PDF"
+                                            }
+                                            """
+                            )
+                    )
+            )
+    })
+    @GetMapping("/download")
+    public ResponseEntity<?> downloadRelatorio(
+            @Parameter(
+                    description = """
+                            Formato do relatório a ser baixado.
+                            
+                            **Opções:**
+                            - `json` - Retorna arquivo report.json
+                            - `pdf` - Retorna arquivo report.pdf com gráficos
+                            """,
+                    example = "pdf",
+                    required = true
+            )
+            @RequestParam(value = "format") String format
+    ) {
+        logger.info("Requisição de download de relatório no formato: {}", format);
+
+        // Validar formato
+        if (format == null || (!format.equalsIgnoreCase("json") && !format.equalsIgnoreCase("pdf"))) {
+            logger.warn("Formato inválido requisitado: {}", format);
+            return ResponseEntity
+                    .badRequest()
+                    .body(Map.of("erro", "Formato inválido. Use 'json' ou 'pdf'."));
+        }
+
+        try {
+            // Gerar relatório completo
+            RelatorioCompletoDTO relatorio = relatorioService.gerarRelatorioCompleto();
+
+            if (format.equalsIgnoreCase("json")) {
+                return downloadJson(relatorio);
+            } else {
+                return downloadPdf(relatorio);
+            }
+
+        } catch (Exception e) {
+            logger.error("Erro ao gerar relatório no formato {}: {}", format, e.getMessage(), e);
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("erro", "Erro ao gerar relatório " + format.toUpperCase()));
+        }
+    }
+
+    private ResponseEntity<byte[]> downloadJson(RelatorioCompletoDTO relatorio) throws IOException {
+        logger.info("Gerando relatório JSON");
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        byte[] jsonBytes = objectMapper.writerWithDefaultPrettyPrinter()
+                .writeValueAsBytes(relatorio);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setContentDispositionFormData("attachment", "report.json");
+        headers.setContentLength(jsonBytes.length);
+
+        logger.info("Relatório JSON gerado com sucesso - {} bytes", jsonBytes.length);
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(jsonBytes);
+    }
+
+    private ResponseEntity<byte[]> downloadPdf(RelatorioCompletoDTO relatorio) throws DocumentException, IOException {
+        logger.info("Gerando relatório PDF");
+
+        byte[] pdfBytes = pdfService.gerarRelatorioPdf(relatorio);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "report.pdf");
+        headers.setContentLength(pdfBytes.length);
+
+        logger.info("Relatório PDF gerado com sucesso - {} bytes", pdfBytes.length);
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
     }
 }
 

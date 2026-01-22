@@ -22,6 +22,9 @@ Empresas e profissionais frequentemente precisam analisar grandes volumes de dad
 - Cálculo automático de receita líquida, custo total e lucro bruto
 - Relatórios de vendas agregados por produto (quantidade e total arrecadado)
 - Resumo executivo das vendas (número total, ticket médio, canais e formas de pagamento mais/menos usados)
+- Análise de desempenho por região geográfica
+- Perfil demográfico dos clientes (gênero, faixa etária, cidade)
+- **Download de relatórios completos em formato JSON e PDF**
 - Documentação automática dos endpoints via Swagger
 - Logs detalhados de operações e erros
 
@@ -38,7 +41,10 @@ com.recode.hanami
 ├── service/             # Camada de lógica de negócio
 │   ├── CsvService.java                     # Conversão CSV → JSON
 │   ├── ProcessamentoVendasService.java     # Processamento e persistência
-│   └── CalculadoraMetricasService.java     # Cálculos financeiros
+│   ├── CalculadoraMetricasService.java     # Cálculos financeiros
+│   ├── CalculosDemografiaRegiao.java       # Métricas regionais e demográficas
+│   ├── RelatorioService.java               # Geração de relatórios completos
+│   └── PdfService.java                     # Geração de PDFs com gráficos
 │
 ├── repository/         # Camada de acesso a dados (JPA)
 │   ├── VendaRepository.java
@@ -54,7 +60,14 @@ com.recode.hanami
 │
 ├── dto/                 # Data Transfer Objects
 │   ├── DadosArquivoDTO.java
-│   └── ImportacaoResponseDTO.java
+│   ├── ImportacaoResponseDTO.java
+│   ├── MetricasFinanceirasDTO.java
+│   ├── AnaliseProdutoDTO.java
+│   ├── ResumoVendasDTO.java
+│   ├── RelatorioCompletoDTO.java
+│   ├── MetricasRegiaoDTO.java
+│   ├── DistribuicaoClientesDTO.java
+│   └── ItemDistribuicaoDTO.java
 │
 ├── exceptions/          # Exceções personalizadas
 │   ├── ArquivoInvalidoException.java
@@ -73,6 +86,8 @@ Principais tecnologias utilizadas:
 - **Jackson Dataformat CSV**
 - **SpringDoc OpenAPI (Swagger)**
 - **SLF4J / Logback**
+- **OpenPDF 1.3.30** (geração de PDFs)
+- **JFreeChart 1.5.3** (geração de gráficos)
 
 ## Pré-requisitos
 
@@ -223,9 +238,12 @@ A API possui documentação interativa gerada automaticamente pelo **SpringDoc O
 - `POST /hanami/upload-file` - Upload de arquivo CSV
 
 #### Reports Controller
-- `GET /hanami/reports/financial-metrics` - Retorna receita líquida, custo total e lucro bruto.
-- `GET /hanami/reports/product-analysis` - Retorna lista de produtos com quantidade vendida e total arrecadado.
-- `GET /hanami/reports/sales-summary` - Retorna resumo com número de vendas, ticket médio, formas de pagamento e canais mais/menos usados.
+- `GET /hanami/reports/financial-metrics` - Retorna receita líquida, custo total e lucro bruto
+- `GET /hanami/reports/product-analysis` - Retorna lista de produtos com quantidade vendida e total arrecadado
+- `GET /hanami/reports/sales-summary` - Retorna resumo com número de vendas, ticket médio, formas de pagamento e canais mais/menos usados
+- `GET /hanami/reports/regional-performance` - Retorna métricas de desempenho por região geográfica
+- `GET /hanami/reports/customer-profile` - Retorna perfil demográfico dos clientes
+- `GET /hanami/reports/download` - **Download de relatório completo em JSON ou PDF**
 
 ## Detalhes dos Endpoints da API
 
@@ -351,6 +369,160 @@ Este endpoint fornece informações estratégicas para:
 
 ---
 
+### 5. Desempenho por Região
+**Endpoint:** `GET /hanami/reports/regional-performance`
+
+**Descrição:** Retorna métricas de vendas agrupadas por região geográfica. Para cada região, são calculados: total de transações, receita total, quantidade de produtos vendidos e valor médio por transação.
+
+**Resposta de Sucesso (200):**
+```json
+{
+  "Sudeste": {
+    "totalTransacoes": 4523,
+    "receitaTotal": 1250300.50,
+    "quantidadeVendida": 8900,
+    "mediaValorTransacao": 276.42
+  },
+  "Sul": {
+    "totalTransacoes": 2156,
+    "receitaTotal": 680200.00,
+    "quantidadeVendida": 4350,
+    "mediaValorTransacao": 315.52
+  }
+}
+```
+
+---
+
+### 6. Perfil Demográfico dos Clientes
+**Endpoint:** `GET /hanami/reports/customer-profile`
+
+**Descrição:** Retorna a distribuição dos clientes por gênero, faixa etária e cidade. Para cada categoria, são apresentadas a contagem e o percentual do total.
+
+**Resposta de Sucesso (200):**
+```json
+{
+  "por_genero": {
+    "M": {
+      "contagem": 5230,
+      "percentual": 52.30
+    },
+    "F": {
+      "contagem": 4770,
+      "percentual": 47.70
+    }
+  },
+  "por_faixa_etaria": {
+    "26-35": {
+      "contagem": 3200,
+      "percentual": 32.00
+    },
+    "36-45": {
+      "contagem": 2800,
+      "percentual": 28.00
+    }
+  },
+  "por_cidade": {
+    "São Paulo": {
+      "contagem": 2500,
+      "percentual": 25.00
+    }
+  }
+}
+```
+
+---
+
+### 7. Download de Relatório Completo
+**Endpoint:** `GET /hanami/reports/download?format={json|pdf}`
+
+**Descrição:** Faz o download de um relatório completo de análise de vendas nos formatos JSON ou PDF. O relatório inclui todas as métricas financeiras, análise de produtos, resumo de vendas e desempenho regional consolidados em um único arquivo.
+
+**Parâmetros de Query (obrigatório):**
+- `format` (string): Formato do relatório
+  - `json` - Retorna arquivo `report.json` para download
+  - `pdf` - Retorna arquivo `report.pdf` com tabelas e gráficos
+
+**Exemplos de Requisição:**
+```
+GET /hanami/reports/download?format=json
+GET /hanami/reports/download?format=pdf
+```
+
+**Resposta de Sucesso (200) - JSON:**
+```
+Content-Type: application/json
+Content-Disposition: attachment; filename="report.json"
+```
+```json
+{
+  "data_geracao": "2026-01-22T10:30:00",
+  "metricas_financeiras": {
+    "receita_liquida": 458900.75,
+    "custo_total": 321230.50,
+    "lucro_bruto": 137670.25
+  },
+  "analise_produtos": [
+    {
+      "nome_produto": "Notebook Dell",
+      "quantidade_vendida": 125,
+      "total_arrecadado": 400000.00
+    }
+  ],
+  "resumo_vendas": {
+    "numero_total_vendas": 356,
+    "valor_medio_por_transacao": 690.45,
+    "forma_pagamento_mais_utilizada": "Cartão de Crédito",
+    "canal_vendas_mais_utilizado": "E-commerce"
+  },
+  "desempenho_regional": {
+    "Sudeste": {
+      "totalTransacoes": 4523,
+      "receitaTotal": 1250300.50,
+      "quantidadeVendida": 8900,
+      "mediaValorTransacao": 276.42
+    }
+  }
+}
+```
+
+**Resposta de Sucesso (200) - PDF:**
+```
+Content-Type: application/pdf
+Content-Disposition: attachment; filename="report.pdf"
+```
+
+O PDF contém:
+- **Título** com data e hora de geração
+- **Tabela de Métricas Financeiras** (receita, custos, lucro)
+- **Gráfico de Barras** com receita total por região (gerado com JFreeChart)
+- **Tabela de Análise de Produtos** (top 10 produtos)
+- **Tabela de Resumo de Vendas**
+- **Tabela de Desempenho Regional Detalhado**
+
+**Resposta de Erro (400):**
+```json
+{
+  "erro": "Formato inválido. Use 'json' ou 'pdf'."
+}
+```
+
+**Características do PDF:**
+- Design profissional com cabeçalhos coloridos
+- Formatação brasileira (R$ e dd/MM/yyyy HH:mm:ss)
+- Gráfico visual de barras mostrando receita por região
+- Tabelas bem formatadas e organizadas
+- Gerado usando OpenPDF e JFreeChart
+
+**Casos de Uso:**
+- Exportar dados para análise offline
+- Compartilhar relatórios com stakeholders
+- Manter histórico de análises
+- Apresentações executivas (formato PDF)
+- Integração com outros sistemas (formato JSON)
+
+---
+
 ## Testando com Postman ou Insomnia
 
 ### Usando Postman
@@ -454,6 +626,37 @@ Este endpoint fornece informações estratégicas para:
    - O endpoint retorna métricas estratégicas sobre as vendas
    - Identifica padrões de comportamento de compra dos clientes
    - Mostra quais canais e formas de pagamento precisam de mais atenção
+
+#### 5. Download de Relatório (JSON)
+
+1. Crie uma nova requisição:
+   - **Método:** `GET`
+   - **URL:** `http://localhost:8080/hanami/reports/download?format=json`
+   
+2. Clique em **"Send"**
+
+3. **Resposta esperada:**
+   - O navegador/Postman irá baixar o arquivo `report.json`
+   - O arquivo contém todas as métricas consolidadas em formato JSON
+
+#### 6. Download de Relatório (PDF)
+
+1. Crie uma nova requisição:
+   - **Método:** `GET`
+   - **URL:** `http://localhost:8080/hanami/reports/download?format=pdf`
+   
+2. Clique em **"Send"**
+
+3. **Resposta esperada:**
+   - O navegador/Postman irá baixar o arquivo `report.pdf`
+   - O PDF contém:
+     - Tabelas formatadas com métricas financeiras
+     - Gráfico de barras de vendas por região
+     - Análise de produtos (top 10)
+     - Resumo completo de vendas
+     - Design profissional com formatação brasileira (R$)
+
+**Dica:** No Postman, você pode clicar em "Send and Download" para salvar o arquivo diretamente.
 
 ---
 
