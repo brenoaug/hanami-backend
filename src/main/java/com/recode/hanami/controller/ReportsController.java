@@ -1,642 +1,122 @@
 package com.recode.hanami.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.lowagie.text.DocumentException;
+import com.recode.hanami.controller.docs.ReportsControllerOpenApi;
 import com.recode.hanami.dto.DistribuicaoClientesDTO;
 import com.recode.hanami.dto.MetricasRegiaoDTO;
 import com.recode.hanami.dto.RelatorioCompletoDTO;
 import com.recode.hanami.entities.Venda;
 import com.recode.hanami.repository.VendaRepository;
-import com.recode.hanami.service.CalculadoraMetricasService;
 import com.recode.hanami.service.CalculosDemografiaRegiao;
-import com.recode.hanami.service.PdfService;
 import com.recode.hanami.service.RelatorioService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import com.recode.hanami.util.DownloadArquivoUtil;
+import com.recode.hanami.validation.FormatoRelatorioValidator;
+import com.recode.hanami.validation.SortByValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.IOException;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
+/**
+ * Controller responsável pelos endpoints de relatórios e análises.
+ * Implementa apenas orquestração - toda lógica de negócio está nos Services.
+ * Exceções são tratadas pelo GlobalExceptionHandler.
+ */
 @RestController
 @RequestMapping("hanami/reports")
-@Tag(name = "Relatórios e Análises", description = "Endpoints para geração de relatórios e análises de vendas")
-public class ReportsController {
+public class ReportsController implements ReportsControllerOpenApi {
 
     private static final Logger logger = LoggerFactory.getLogger(ReportsController.class);
 
     private final VendaRepository vendaRepository;
-    private final CalculadoraMetricasService calculadoraService;
     private final CalculosDemografiaRegiao calculosDemografiaRegiao;
     private final RelatorioService relatorioService;
-    private final PdfService pdfService;
+    private final FormatoRelatorioValidator formatoRelatorioValidator;
+    private final SortByValidator sortByValidator;
 
     public ReportsController(VendaRepository vendaRepository,
-                             CalculadoraMetricasService calculadoraService,
                              CalculosDemografiaRegiao calculosDemografiaRegiao,
                              RelatorioService relatorioService,
-                             PdfService pdfService) {
+                             FormatoRelatorioValidator formatoRelatorioValidator,
+                             SortByValidator sortByValidator) {
         this.vendaRepository = vendaRepository;
-        this.calculadoraService = calculadoraService;
         this.calculosDemografiaRegiao = calculosDemografiaRegiao;
         this.relatorioService = relatorioService;
-        this.pdfService = pdfService;
+        this.formatoRelatorioValidator = formatoRelatorioValidator;
+        this.sortByValidator = sortByValidator;
     }
 
-    @Operation(
-            summary = "Métricas financeiras globais",
-            description = "Retorna um resumo consolidado das principais métricas financeiras da empresa: " +
-                    "receita líquida total, custo total operacional e lucro bruto. " +
-                    "Este endpoint processa todas as transações de vendas e calcula os indicadores-chave de desempenho (KPIs) financeiros."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Métricas calculadas com sucesso",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    name = "Exemplo de resposta",
-                                    description = "Resumo financeiro consolidado de todas as transações",
-                                    value = """
-                                            {
-                                              "receita_liquida": 458900.75,
-                                              "custo_total": 321230.50,
-                                              "lucro_bruto": 137670.25
-                                            }
-                                            """
-                            )
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Sem dados disponíveis",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    name = "Resposta sem vendas",
-                                    description = "Quando não há transações registradas no sistema",
-                                    value = """
-                                            {
-                                              "receita_liquida": 0.0,
-                                              "custo_total": 0.0,
-                                              "lucro_bruto": 0.0
-                                            }
-                                            """
-                            )
-                    )
-            )
-    })
     @GetMapping("/financial-metrics")
+    @Override
     public ResponseEntity<Map<String, Double>> getFinancialMetrics() {
-        logger.debug("Iniciando cálculo das métricas financeiras gerais");
-
-        List<Venda> vendas = vendaRepository.findAll();
-
-        Double receitaLiquida = calculadoraService.calcularTotalVendas(vendas);
-        Double custoTotal = calculadoraService.calcularCustoTotalGeral(vendas);
-        Double lucroBruto = calculadoraService.calcularLucroBrutoGeral(vendas);
-
-        Map<String, Double> metrics = new LinkedHashMap<>();
-        metrics.put("receita_liquida", receitaLiquida);
-        metrics.put("custo_total", custoTotal);
-        metrics.put("lucro_bruto", lucroBruto);
-
+        logger.debug("Solicitação de métricas financeiras");
+        Map<String, Double> metrics = relatorioService.gerarMetricasFinanceirasMap();
         return ResponseEntity.ok(metrics);
     }
 
-    @Operation(
-            summary = "Análise detalhada por produto",
-            description = """
-                    Retorna uma análise agregada das vendas agrupadas por produto.
-                    
-                    **Campos retornados:**
-                    - `nome_produto`: Nome do produto
-                    - `quantidade_vendida`: Total de unidades vendidas do produto
-                    - `total_arrecadado`: Valor total de receita gerado pelo produto
-                    
-                    **Parâmetros de ordenação disponíveis:**
-                    - `nome` (padrão) - Por nome do produto (alfabético)
-                    - `quantidade` - Por quantidade vendida (maior → menor)
-                    - `total` - Por total arrecadado (maior → menor)
-                    """
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Análise realizada com sucesso",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    name = "Exemplo de resposta",
-                                    description = "Lista de produtos com totais agregados",
-                                    value = """
-                                            [
-                                              {
-                                                "nome_produto": "Notebook Dell Inspiron",
-                                                "quantidade_vendida": 125,
-                                                "total_arrecadado": 400000.00
-                                              },
-                                              {
-                                                "nome_produto": "Mouse Logitech MX Master",
-                                                "quantidade_vendida": 350,
-                                                "total_arrecadado": 98000.00
-                                              }
-                                            ]
-                                            """
-                            )
-                    )
-            )
-    })
     @GetMapping("/product-analysis")
+    @Override
     public ResponseEntity<List<Map<String, Object>>> analisarLucros(
-            @Parameter(
-                    description = """
-                            Critério de ordenação dos resultados. **Opções disponíveis:**
-                            
-                            - `nome` (padrão) - Ordena por nome do produto (alfabético)
-                            - `quantidade` - Ordena por quantidade vendida (maior para menor)
-                            - `total` - Ordena por total arrecadado (maior para menor)
-                            
-                            **Exemplo de uso:** `/hanami/reports/product-analysis?sort_by=total`""",
-                    example = "total"
-            )
-            @RequestParam(value = "sort_by", required = false, defaultValue = "nome") String sortBy
-    ) {
-        logger.debug("Iniciando análise agregada por produto");
-
-        List<Venda> todasVendas = vendaRepository.findAllWithRelations();
-
-        Map<String, Map<String, Object>> produtosMap = new LinkedHashMap<>();
-
-        for (Venda venda : todasVendas) {
-            String nomeProduto = venda.getProduto().getNomeProduto();
-            Integer quantidade = venda.getQuantidade() != null ? venda.getQuantidade() : 0;
-            Double receita = venda.getValorFinal() != null ? venda.getValorFinal() : 0.0;
-
-
-            if (produtosMap.containsKey(nomeProduto)) {
-                Map<String, Object> produtoExistente = produtosMap.get(nomeProduto);
-                Integer qtdAtual = (Integer) produtoExistente.get("quantidade_vendida");
-                Double totalAtual = (Double) produtoExistente.get("total_arrecadado");
-
-                produtoExistente.put("quantidade_vendida", qtdAtual + quantidade);
-                produtoExistente.put("total_arrecadado", calculadoraService.arredondar(totalAtual + receita));
-            } else {
-                Map<String, Object> novoProduto = new LinkedHashMap<>();
-                novoProduto.put("nome_produto", nomeProduto);
-                novoProduto.put("quantidade_vendida", quantidade);
-                novoProduto.put("total_arrecadado", calculadoraService.arredondar(receita));
-
-                produtosMap.put(nomeProduto, novoProduto);
-            }
-        }
-
-        List<Map<String, Object>> relatorio = new ArrayList<>(produtosMap.values());
-
-
-        if (sortBy != null) {
-            switch (sortBy.toLowerCase()) {
-                case "quantidade":
-                    relatorio.sort((a, b) -> ((Integer) b.get("quantidade_vendida")).compareTo((Integer) a.get("quantidade_vendida")));
-                    break;
-                case "total":
-                    relatorio.sort((a, b) -> ((Double) b.get("total_arrecadado")).compareTo((Double) a.get("total_arrecadado")));
-                    break;
-                default:
-                    relatorio.sort(Comparator.comparing(a -> ((String) a.get("nome_produto"))));
-                    break;
-            }
-        }
-
+            @RequestParam(value = "sort_by", required = false, defaultValue = "nome") String sortBy) {
+        logger.debug("Solicitação de análise de produtos com ordenação: {}", sortBy);
+        String normalizedSortBy = sortByValidator.normalize(sortBy);
+        List<Map<String, Object>> relatorio = relatorioService.gerarAnaliseProdutosOrdenada(normalizedSortBy);
         return ResponseEntity.ok(relatorio);
     }
 
-    @Operation(
-            summary = "Resumo financeiro das vendas",
-            description = "Retorna um resumo detalhado das vendas com métricas de transações, " +
-                    "formas de pagamento e canais de venda mais e menos utilizados."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Resumo calculado com sucesso",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    name = "Exemplo de resposta",
-                                    value = """
-                                            {
-                                              "numero_total_vendas": 356,
-                                              "valor_medio_por_transacao": 690.45,
-                                              "forma_pagamento_mais_utilizada": "Cartão de Crédito",
-                                              "forma_pagamento_menos_utilizada": "Boleto",
-                                              "canal_vendas_mais_utilizado": "E-commerce",
-                                              "canal_vendas_menos_utilizado": "Telefone"
-                                            }
-                                            """
-                            )
-                    )
-            )
-    })
     @GetMapping("/sales-summary")
+    @Override
     public ResponseEntity<Map<String, Object>> resumoFinanceiro() {
-        logger.debug("Iniciando cálculo do resumo financeiro das vendas");
-
-        List<Venda> todasVendas = vendaRepository.findAll();
-
-        Integer numeroTotalVendas = calculadoraService.calcularNumeroTransacoes(todasVendas);
-        Double valorMedioPorTransacao = calculadoraService.calcularMediaPorTransacao(todasVendas);
-        String formaPagamentoMaisUtilizada = calculadoraService.calcularFormaPagamentoMaisUtilizada(todasVendas);
-        String formaPagamentoMenosUtilizada = calculadoraService.calcularFormaPagamentoMenosUtilizada(todasVendas);
-        String canalVendasMaisUtilizado = calculadoraService.calcularCanalVendasMaisUtilizado(todasVendas);
-        String canalVendasMenosUtilizado = calculadoraService.calcularCanalVendasMenosUtilizado(todasVendas);
-
-        Map<String, Object> resumo = new LinkedHashMap<>();
-        resumo.put("numero_total_vendas", numeroTotalVendas);
-        resumo.put("valor_medio_por_transacao", valorMedioPorTransacao);
-        resumo.put("forma_pagamento_mais_utilizada", formaPagamentoMaisUtilizada);
-        resumo.put("forma_pagamento_menos_utilizada", formaPagamentoMenosUtilizada);
-        resumo.put("canal_vendas_mais_utilizado", canalVendasMaisUtilizado);
-        resumo.put("canal_vendas_menos_utilizado", canalVendasMenosUtilizado);
-
-        logger.info("Resumo financeiro calculado: {} vendas, média de R$ {}", numeroTotalVendas, valorMedioPorTransacao);
-
+        logger.debug("Solicitação de resumo de vendas");
+        Map<String, Object> resumo = relatorioService.gerarResumoVendasMap();
+        logger.info("Resumo de vendas gerado: {} transações", resumo.get("numero_total_vendas"));
         return ResponseEntity.ok(resumo);
     }
 
-    @Operation(
-            summary = "Desempenho por região",
-            description = "Retorna métricas de vendas agrupadas por região geográfica. " +
-                    "Para cada região, são calculados: total de transações, receita total, " +
-                    "quantidade de produtos vendidos e valor médio por transação."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Métricas por região calculadas com sucesso",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    name = "Exemplo de resposta",
-                                    description = "Desempenho consolidado por região",
-                                    value = """
-                                            {
-                                              "Sudeste": {
-                                                "totalTransacoes": 4523,
-                                                "receitaTotal": 1250300.50,
-                                                "quantidadeVendida": 8900,
-                                                "mediaValorTransacao": 276.42
-                                              },
-                                              "Sul": {
-                                                "totalTransacoes": 2156,
-                                                "receitaTotal": 680200.00,
-                                                "quantidadeVendida": 4350,
-                                                "mediaValorTransacao": 315.52
-                                              },
-                                              "Nordeste": {
-                                                "totalTransacoes": 1890,
-                                                "receitaTotal": 450780.25,
-                                                "quantidadeVendida": 3200,
-                                                "mediaValorTransacao": 238.50
-                                              },
-                                              "Norte": {
-                                                "totalTransacoes": 980,
-                                                "receitaTotal": 245600.75,
-                                                "quantidadeVendida": 1650,
-                                                "mediaValorTransacao": 250.61
-                                              },
-                                              "Centro-Oeste": {
-                                                "totalTransacoes": 751,
-                                                "receitaTotal": 198450.00,
-                                                "quantidadeVendida": 1200,
-                                                "mediaValorTransacao": 264.25
-                                              }
-                                            }
-                                            """
-                            )
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Sem dados disponíveis",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    name = "Resposta vazia",
-                                    description = "Quando não há transações com região definida",
-                                    value = "{}"
-                            )
-                    )
-            )
-    })
     @GetMapping("/regional-performance")
+    @Override
     public ResponseEntity<Map<String, MetricasRegiaoDTO>> getRegionalPerformance() {
-        logger.debug("Iniciando cálculo de desempenho por região");
-
-        List<Venda> todasVendas = vendaRepository.findAll();
-        Map<String, MetricasRegiaoDTO> metricasPorRegiao =
-                calculosDemografiaRegiao.calcularMetricasPorRegiao(todasVendas);
-
-        logger.info("Desempenho por região calculado: {} regiões encontradas", metricasPorRegiao.size());
-
-        return ResponseEntity.ok(metricasPorRegiao);
+        logger.debug("Solicitação de desempenho por região");
+        List<Venda> vendas = vendaRepository.findAll();
+        Map<String, MetricasRegiaoDTO> metricas = calculosDemografiaRegiao.calcularMetricasPorRegiao(vendas);
+        logger.info("Desempenho regional calculado: {} regiões", metricas.size());
+        return ResponseEntity.ok(metricas);
     }
 
-    @Operation(
-            summary = "Perfil demográfico dos clientes",
-            description = "Retorna a distribuição dos clientes por gênero, faixa etária e cidade. " +
-                    "Para cada categoria, são apresentadas a contagem e o percentual do total."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Perfil demográfico calculado com sucesso",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    name = "Exemplo de resposta",
-                                    description = "Distribuições demográficas consolidadas",
-                                    value = """
-                                            {
-                                              "por_genero": {
-                                                "M": {
-                                                  "contagem": 5230,
-                                                  "percentual": 52.30
-                                                },
-                                                "F": {
-                                                  "contagem": 4770,
-                                                  "percentual": 47.70
-                                                }
-                                              },
-                                              "por_faixa_etaria": {
-                                                "26-35": {
-                                                  "contagem": 3200,
-                                                  "percentual": 32.00
-                                                },
-                                                "36-45": {
-                                                  "contagem": 2800,
-                                                  "percentual": 28.00
-                                                },
-                                                "18-25": {
-                                                  "contagem": 2100,
-                                                  "percentual": 21.00
-                                                },
-                                                "46-55": {
-                                                  "contagem": 1200,
-                                                  "percentual": 12.00
-                                                },
-                                                "56-65": {
-                                                  "contagem": 500,
-                                                  "percentual": 5.00
-                                                },
-                                                "Acima de 65": {
-                                                  "contagem": 200,
-                                                  "percentual": 2.00
-                                                }
-                                              },
-                                              "por_cidade": {
-                                                "São Paulo": {
-                                                  "contagem": 2500,
-                                                  "percentual": 25.00
-                                                },
-                                                "Rio de Janeiro": {
-                                                  "contagem": 1800,
-                                                  "percentual": 18.00
-                                                },
-                                                "Belo Horizonte": {
-                                                  "contagem": 1200,
-                                                  "percentual": 12.00
-                                                },
-                                                "Brasília": {
-                                                  "contagem": 950,
-                                                  "percentual": 9.50
-                                                }
-                                              }
-                                            }
-                                            """
-                            )
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Sem dados disponíveis",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    name = "Resposta vazia",
-                                    description = "Quando não há clientes cadastrados",
-                                    value = """
-                                            {
-                                              "por_genero": {},
-                                              "por_faixa_etaria": {},
-                                              "por_cidade": {}
-                                            }
-                                            """
-                            )
-                    )
-            )
-    })
     @GetMapping("/customer-profile")
+    @Override
     public ResponseEntity<DistribuicaoClientesDTO> getCustomerProfile() {
-        logger.debug("Iniciando cálculo de perfil demográfico dos clientes");
-
-        List<Venda> todasVendas = vendaRepository.findAll();
-        DistribuicaoClientesDTO distribuicao =
-                calculosDemografiaRegiao.calcularDistribuicaoClientes(todasVendas);
-
-        logger.info("Perfil demográfico calculado com sucesso");
-
+        logger.debug("Solicitação de perfil demográfico");
+        List<Venda> vendas = vendaRepository.findAll();
+        DistribuicaoClientesDTO distribuicao = calculosDemografiaRegiao.calcularDistribuicaoClientes(vendas);
+        logger.info("Perfil demográfico calculado");
         return ResponseEntity.ok(distribuicao);
     }
 
-    @Operation(
-            summary = "Download de relatório completo",
-            description = """
-                    Faz o download de um relatório completo de análise de vendas nos formatos JSON ou PDF.
-                    
-                    **Formatos disponíveis:**
-                    - `json` - Relatório em formato JSON para download
-                    - `pdf` - Relatório em formato PDF com tabelas e gráficos
-                    
-                    O relatório inclui:
-                    - Métricas financeiras (receita, custos, lucro)
-                    - Análise detalhada de produtos
-                    - Resumo de vendas e canais
-                    - Desempenho regional
-                    - Gráficos de vendas por região (apenas PDF)
-                    """
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Relatório gerado com sucesso",
-                    content = {
-                            @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(
-                                            name = "Formato JSON",
-                                            description = "Exemplo de estrutura do relatório JSON",
-                                            value = """
-                                                    {
-                                                      "data_geracao": "2026-01-22T10:30:00",
-                                                      "metricas_financeiras": {
-                                                        "receita_liquida": 458900.75,
-                                                        "custo_total": 321230.50,
-                                                        "lucro_bruto": 137670.25
-                                                      },
-                                                      "analise_produtos": [
-                                                        {
-                                                          "nome_produto": "Notebook Dell",
-                                                          "quantidade_vendida": 125,
-                                                          "total_arrecadado": 400000.00
-                                                        }
-                                                      ],
-                                                      "resumo_vendas": {
-                                                        "numero_total_vendas": 356,
-                                                        "valor_medio_por_transacao": 690.45
-                                                      },
-                                                      "desempenho_regional": {
-                                                        "Sudeste": {
-                                                          "totalTransacoes": 4523,
-                                                          "receitaTotal": 1250300.50
-                                                        }
-                                                      }
-                                                    }
-                                                    """
-                                    )
-                            ),
-                            @Content(
-                                    mediaType = "application/pdf",
-                                    examples = @ExampleObject(
-                                            name = "Formato PDF",
-                                            description = "Arquivo PDF com tabelas formatadas e gráfico de barras"
-                                    )
-                            )
-                    }
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Formato inválido",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    name = "Erro de formato",
-                                    value = """
-                                            {
-                                              "erro": "Formato inválido. Use 'json' ou 'pdf'."
-                                            }
-                                            """
-                            )
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "500",
-                    description = "Erro ao gerar relatório",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    name = "Erro interno",
-                                    value = """
-                                            {
-                                              "erro": "Erro ao gerar relatório PDF"
-                                            }
-                                            """
-                            )
-                    )
-            )
-    })
     @GetMapping("/download")
-    public ResponseEntity<?> downloadRelatorio(
-            @Parameter(
-                    description = """
-                            Formato do relatório a ser baixado.
-                            
-                            **Opções:**
-                            - `json` - Retorna arquivo report.json
-                            - `pdf` - Retorna arquivo report.pdf com gráficos
-                            """,
-                    example = "pdf",
-                    required = true
-            )
-            @RequestParam(value = "format") String format
-    ) {
-        logger.info("Requisição de download de relatório no formato: {}", format);
+    @Override
+    public ResponseEntity<byte[]> downloadRelatorio(@RequestParam(value = "format") String format) {
+        logger.info("Download de relatório solicitado: formato={}", format);
 
-        // Validar formato
-        if (format == null || (!format.equalsIgnoreCase("json") && !format.equalsIgnoreCase("pdf"))) {
-            logger.warn("Formato inválido requisitado: {}", format);
-            return ResponseEntity
-                    .badRequest()
-                    .body(Map.of("erro", "Formato inválido. Use 'json' ou 'pdf'."));
-        }
+        // Validar formato (lança exceção se inválido)
+        formatoRelatorioValidator.validate(format);
 
-        try {
-            // Gerar relatório completo
-            RelatorioCompletoDTO relatorio = relatorioService.gerarRelatorioCompleto();
+        // Gerar relatório completo
+        RelatorioCompletoDTO relatorio = relatorioService.gerarRelatorioCompleto();
 
-            if (format.equalsIgnoreCase("json")) {
-                return downloadJson(relatorio);
-            } else {
-                return downloadPdf(relatorio);
-            }
+        // Gerar arquivo conforme formato
+        byte[] conteudo = format.equalsIgnoreCase("json")
+            ? relatorioService.gerarRelatorioJsonBytes(relatorio)
+            : relatorioService.gerarRelatorioPdfBytes(relatorio);
 
-        } catch (Exception e) {
-            logger.error("Erro ao gerar relatório no formato {}: {}", format, e.getMessage(), e);
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("erro", "Erro ao gerar relatório " + format.toUpperCase()));
-        }
-    }
+        logger.info("Relatório {} gerado com sucesso - {} bytes", format.toUpperCase(), conteudo.length);
 
-    private ResponseEntity<byte[]> downloadJson(RelatorioCompletoDTO relatorio) throws IOException {
-        logger.info("Gerando relatório JSON");
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-        byte[] jsonBytes = objectMapper.writerWithDefaultPrettyPrinter()
-                .writeValueAsBytes(relatorio);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setContentDispositionFormData("attachment", "report.json");
-        headers.setContentLength(jsonBytes.length);
-
-        logger.info("Relatório JSON gerado com sucesso - {} bytes", jsonBytes.length);
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(jsonBytes);
-    }
-
-    private ResponseEntity<byte[]> downloadPdf(RelatorioCompletoDTO relatorio) throws DocumentException, IOException {
-        logger.info("Gerando relatório PDF");
-
-        byte[] pdfBytes = pdfService.gerarRelatorioPdf(relatorio);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("attachment", "report.pdf");
-        headers.setContentLength(pdfBytes.length);
-
-        logger.info("Relatório PDF gerado com sucesso - {} bytes", pdfBytes.length);
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
+        // Retornar resposta de download configurada
+        return DownloadArquivoUtil.buildDownloadResponse(conteudo, format);
     }
 }
-

@@ -5,7 +5,7 @@ import com.recode.hanami.entities.Cliente;
 import com.recode.hanami.entities.Produto;
 import com.recode.hanami.entities.Venda;
 import com.recode.hanami.entities.Vendedor;
-import com.recode.hanami.exceptions.DadosInvalidosException;
+import com.recode.hanami.exception.DadosInvalidosException;
 import com.recode.hanami.repository.ClienteRepository;
 import com.recode.hanami.repository.ProdutoRepository;
 import com.recode.hanami.repository.VendaRepository;

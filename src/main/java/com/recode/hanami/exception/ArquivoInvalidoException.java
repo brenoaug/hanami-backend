@@ -1,4 +1,4 @@
-package com.recode.hanami.exceptions;
+package com.recode.hanami.exception;
 
 public class ArquivoInvalidoException extends RuntimeException{
     public ArquivoInvalidoException(String mensagem) {

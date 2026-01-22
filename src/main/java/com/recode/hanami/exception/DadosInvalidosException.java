@@ -1,4 +1,4 @@
-package com.recode.hanami.exceptions;
+package com.recode.hanami.exception;
 
 public class DadosInvalidosException extends RuntimeException {
     public DadosInvalidosException(String mensagem) {

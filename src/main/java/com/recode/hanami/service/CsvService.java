@@ -5,7 +5,7 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.recode.hanami.dto.DadosArquivoDTO;
-import com.recode.hanami.exceptions.ArquivoInvalidoException;
+import com.recode.hanami.exception.ArquivoInvalidoException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
