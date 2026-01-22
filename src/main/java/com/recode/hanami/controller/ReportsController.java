@@ -56,10 +56,14 @@ public class ReportsController implements ReportsControllerOpenApi {
 
     @GetMapping("/product-analysis")
     @Override
-    public ResponseEntity<List<Map<String, Object>>> analisarLucros(
-            @RequestParam(value = "sort_by", required = false, defaultValue = "nome") String sortBy) {
+    public ResponseEntity<List<Map<String, Object>>> analisarLucros(@RequestParam(value = "sort_by", required = false, defaultValue = "nome") String sortBy) {
         logger.debug("Solicitação de análise de produtos com ordenação: {}", sortBy);
         String normalizedSortBy = sortByValidator.normalize(sortBy);
+        boolean isValid = sortByValidator.isValid(sortBy);
+        if (!isValid) {
+            logger.warn("Parâmetro de ordenação inválido: {}. Usando padrão: {}", sortBy, sortByValidator.getDefaultSort());
+            normalizedSortBy = sortByValidator.getDefaultSort();
+        }
         List<Map<String, Object>> relatorio = relatorioService.gerarAnaliseProdutosOrdenada(normalizedSortBy);
         return ResponseEntity.ok(relatorio);
     }

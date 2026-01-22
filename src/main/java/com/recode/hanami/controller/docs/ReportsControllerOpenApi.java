@@ -63,6 +63,7 @@ public interface ReportsControllerOpenApi {
                     - `nome` (padrão) - Por nome do produto (alfabético)
                     - `quantidade` - Por quantidade vendida (maior → menor)
                     - `total` - Por total arrecadado (maior → menor)
+                    - `qualquer outro valor` - Usará o padrão `nome`
                     """
     )
     @ApiResponses(value = {

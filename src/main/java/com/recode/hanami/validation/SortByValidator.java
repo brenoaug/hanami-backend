@@ -29,7 +29,4 @@ public class SortByValidator {
         return DEFAULT_SORT;
     }
 
-    public List<String> getValidSortOptions() {
-        return VALID_SORT_OPTIONS;
-    }
 }
