@@ -31,6 +31,25 @@ public class CalculosDemografiaRegiao {
                 ));
     }
 
+    public Map<String, MetricasRegiaoDTO> calcularMetricasPorEstado(List<Venda> vendas) {
+        if (vendas == null || vendas.isEmpty()) {
+            return new LinkedHashMap<>();
+        }
+
+        return vendas.stream()
+                .filter(venda -> venda.getCliente() != null
+                        && venda.getCliente().getEstadoCliente() != null
+                        && !venda.getCliente().getEstadoCliente().trim().isEmpty())
+                .collect(Collectors.groupingBy(
+                        venda -> venda.getCliente().getEstadoCliente().toUpperCase(),
+                        LinkedHashMap::new,
+                        Collectors.collectingAndThen(
+                                Collectors.toList(),
+                                this::calcularMetricas
+                        )
+                ));
+    }
+
     private MetricasRegiaoDTO calcularMetricas(List<Venda> vendasRegiao) {
         long totalTransacoes = vendasRegiao.size();
 

@@ -79,11 +79,24 @@ public class ReportsController implements ReportsControllerOpenApi {
 
     @GetMapping("/regional-performance")
     @Override
-    public ResponseEntity<Map<String, MetricasRegiaoDTO>> getRegionalPerformance() {
-        logger.debug("Solicitação de desempenho por região");
-        List<Venda> vendas = vendaRepository.findAll();
-        Map<String, MetricasRegiaoDTO> metricas = calculosDemografiaRegiao.calcularMetricasPorRegiao(vendas);
-        logger.info("Desempenho regional calculado: {} regiões", metricas.size());
+    public ResponseEntity<Map<String, MetricasRegiaoDTO>> getRegionalPerformance(
+            @RequestParam(value = "estado", required = false) String estado) {
+        logger.debug("Solicitação de desempenho por região - Estado: {}", estado);
+
+        List<Venda> vendas;
+        Map<String, MetricasRegiaoDTO> metricas;
+
+        if (estado != null && !estado.trim().isEmpty()) {
+            vendas = vendaRepository.findByClienteEstado(estado.trim());
+            metricas = calculosDemografiaRegiao.calcularMetricasPorEstado(vendas);
+            logger.info("Desempenho por estado calculado: {} estado(s) - Filtro: {}",
+                        metricas.size(), estado.toUpperCase().trim());
+        } else {
+            vendas = vendaRepository.findAll();
+            metricas = calculosDemografiaRegiao.calcularMetricasPorRegiao(vendas);
+            logger.info("Desempenho regional calculado: {} regiões", metricas.size());
+        }
+
         return ResponseEntity.ok(metricas);
     }
 

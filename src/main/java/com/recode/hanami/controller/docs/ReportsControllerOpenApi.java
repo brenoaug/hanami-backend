@@ -131,7 +131,14 @@ public interface ReportsControllerOpenApi {
 
     @Operation(
             summary = "Desempenho por região",
-            description = "Retorna métricas de vendas agrupadas por região geográfica."
+            description = """
+                    Retorna métricas de vendas agrupadas por região geográfica.
+                    
+                    **Filtros disponíveis:**
+                    - `estado` (opcional) - Filtra os resultados por estado (UF). Exemplo: `SP`, `RJ`, `MG`
+                    
+                    Quando nenhum filtro é aplicado, retorna dados de todas as regiões.
+                    """
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -139,7 +146,19 @@ public interface ReportsControllerOpenApi {
                     description = "Métricas por região calculadas com sucesso"
             )
     })
-    ResponseEntity<Map<String, MetricasRegiaoDTO>> getRegionalPerformance();
+    ResponseEntity<Map<String, MetricasRegiaoDTO>> getRegionalPerformance(
+            @Parameter(
+                    description = """
+                            Sigla do estado (UF) para filtrar os resultados.
+                            
+                            **Exemplos:** `SP`, `RJ`, `MG`, `RS`
+                            
+                            Quando não especificado, retorna métricas de todos os estados.
+                            """,
+                    example = "SP"
+            )
+            String estado
+    );
 
     @Operation(
             summary = "Perfil demográfico dos clientes",
