@@ -1,0 +1,10 @@
+version: '3.9'
+services:
+  hanami:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: hanami
+    ports:
+      - "8080:8080"
+    container_name: hanami-container
