@@ -30,8 +30,7 @@ import org.springframework.context.annotation.Configuration;
                         - Dados Logísticos: regiao, status_entrega, tempo_entrega_dias, vendedor_id
                         
                         ## Projeto desenvolvido em parceria com:
-                        - Recode Pro
-                        - Instituto Coca-Cola
+                        - Recode
                         """,
                 contact = @Contact(
                         name = "Breno Augusto",
