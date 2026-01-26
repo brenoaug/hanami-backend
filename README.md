@@ -285,43 +285,19 @@ Este comando irá:
 - Configurar automaticamente a rede entre os containers
 - Persistir os dados do MySQL em um volume Docker
 
-#### 4. Acompanhe os Logs
+---
+
+#### 4. Usando a imagem publicada no Docker Hub (Alternativa)
+
+Se preferir usar a imagem publicada ao invés de construir localmente, você pode puxá-la diretamente:
+
+**Link da imagem:** https://hub.docker.com/repository/docker/brenoaug/hanami/general
 
 ```bash
-# Ver logs de todos os containers
-docker compose logs -f
-
-# Ver apenas logs da aplicação
-docker compose logs -f hanami
-
-# Ver apenas logs do banco de dados
-docker compose logs -f hanami-db
+docker pull brenoaug/hanami:latest
 ```
 
-#### 5. Verifique se a Aplicação Está Rodando
-
-Aguarde alguns segundos e acesse:
-- **API**: http://localhost:8080
-- **Swagger UI**: http://localhost:8080/swagger-ui.html
-
-#### Comandos Úteis do Docker
-
-```bash
-# Parar os containers
-docker compose stop
-
-# Parar e remover os containers
-docker compose down
-
-# Parar, remover containers e volumes (apaga dados do banco)
-docker compose down -v
-
-# Reconstruir a imagem após mudanças no código
-docker compose up -d --build
-
-# Ver status dos containers
-docker compose ps
-```
+Após o pull, você pode usar `image: brenoaug/hanami:latest` no seu `docker-compose.yml` ao invés da seção `build:`.
 
 ---
 
@@ -1020,10 +996,7 @@ docker compose up -d --build
    ```
 
 5. **Verifique se as variáveis estão sendo carregadas:**
-   - Adicione um `System.out.println()` no método `main`:
-   ```java
-   System.out.println("Database URL: " + System.getenv("SPRING_DATASOURCE_URL"));
-   ```
+   - Você pode adicionar um log simples no método `main` (ou usar um breakpoint) para imprimir as env vars durante a inicialização da aplicação, por exemplo: System.out.println("Database URL: " + System.getenv("SPRING_DATASOURCE_URL"));
 
 #### Erro de conexão com MySQL
 - Verifique se o MySQL está rodando
